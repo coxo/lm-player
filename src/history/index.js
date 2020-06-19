@@ -24,7 +24,7 @@ function HistoryPlayer({ type, historyList, defaultTime, className, autoPlay, mu
     try {
       url = historyList.fragments[playIndex].file
     } catch (e) {
-      console.warn('未找打播放地址！', historyList)
+      console.warn('未找到播放地址！', historyList)
     }
     return url
   }, [historyList, playIndex])

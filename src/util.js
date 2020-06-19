@@ -1,4 +1,4 @@
-import flvjs from 'flv.lm.js'
+import flvjs from 'flv.zv.js'
 import * as Hls from 'hls.js'
 
 /**

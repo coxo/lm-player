@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
-import flvjs from 'flv.lm.js';
+import flvjs from 'flv.zv.js';
 import * as Hls from 'hls.js';
 import { isSupported } from 'hls.js';
 import PropTypes from 'prop-types';
@@ -2019,7 +2019,7 @@ function HistoryPlayer({
     try {
       url = historyList.fragments[playIndex].file;
     } catch (e) {
-      console.warn('未找打播放地址！', historyList);
+      console.warn('未找到播放地址！', historyList);
     }
 
     return url;
