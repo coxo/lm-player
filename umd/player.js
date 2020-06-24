@@ -2376,7 +2376,6 @@
 
     componentWillReceiveProps(nextProps) {
       if (this.props.ratio !== nextProps.ratio) {
-        console.info('11111111111');
         this.RATIO = nextProps.ratio;
         this.RATIO && this.websocket.send(`{"commond":"modify", "url":"${this.RATIO}"}`);
       }

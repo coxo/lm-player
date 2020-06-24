@@ -884,7 +884,8 @@ function ContrallerEvent({
 
 function VideoMessage({
   event,
-  api
+  api,
+  isH265
 }) {
   const [state, setState] = useState({
     status: null,
@@ -961,10 +962,16 @@ function VideoMessage({
       event.off(EventName.CLEAR_ERROR_TIMER, reloadSuccess);
     };
   }, [event]);
-  const {
+  let {
     loading,
     status
   } = state;
+
+  if (isH265) {
+    loading = false;
+    status = null;
+  }
+
   return /*#__PURE__*/React.createElement("div", {
     className: `lm-player-message-mask ${loading || status === 'fail' ? 'lm-player-mask-loading-animation' : ''}`
   }, /*#__PURE__*/React.createElement(IconFont, {
@@ -2366,7 +2373,7 @@ class YUVPlayer extends React.Component {
   componentWillReceiveProps(nextProps) {
     if (this.props.ratio !== nextProps.ratio) {
       this.RATIO = nextProps.ratio;
-      this.websocket.send(`{"commond":"modify", "url":"${this.RATIO}"}`);
+      this.RATIO && this.websocket.send(`{"commond":"modify", "url":"${this.RATIO}"}`);
     }
   }
 
@@ -2397,8 +2404,7 @@ class YUVPlayer extends React.Component {
     let webglPlayer = new WebGLPlayer(canvas, {
       preserveDrawingBuffer: false
     });
-    webglPlayer.setSizefunction(ratioWidth, ratioHeight, 1920);
-    console.info(ratioWidth, ratioHeight); // webglPlayer.renderFrame(new Uint8Array(event.data), width, height, ylen, uvlen);
+    webglPlayer.setSizefunction(ratioWidth, ratioHeight, 1920); // console.info(ratioWidth, ratioHeight); // webglPlayer.renderFrame(new Uint8Array(event.data), width, height, ylen, uvlen);
 
     webglPlayer.renderFrame(ratioWidth, ratioHeight, new Uint8Array(event.data, 4));
   }
@@ -2446,7 +2452,7 @@ class YUVPlayer extends React.Component {
 
       if (e.msg === 'succeed') {
         that.startPalyer();
-        this.websocket.send(`{"commond":"modify", "url":"${this.RATIO}"}`);
+        this.RATIO && this.websocket.send(`{"commond":"modify", "url":"${this.RATIO}"}`);
         this.websocket.send('{"commond":"start"}');
       } else {
         this.websocket.onError(e.msg);
@@ -2508,7 +2514,10 @@ function SinglePlayer({
         file
       });
       playerObject.flv.on(DEMUX_MSG_EVENT, data => {
+        console.info(data);
+
         if (data !== 7) {
+          playerObject.api.unload();
           setH265(true);
         } else {
           setH265(false);
@@ -2552,7 +2561,8 @@ function SinglePlayer({
     playsInline: playsinline,
     loop: loop
   }) : /*#__PURE__*/React.createElement(YUVPlayer, {
-    streamUrl: file
+    streamUrl: file,
+    ratio: "960*554"
   })), /*#__PURE__*/React.createElement(VideoTools, {
     playerObj: playerObj,
     isLive: props.isLive,
@@ -2564,7 +2574,8 @@ function SinglePlayer({
     leftMidExtContents: props.leftMidExtContents,
     rightExtContents: props.rightExtContents,
     rightMidExtContents: props.rightMidExtContents,
-    draggable: props.draggable
+    draggable: props.draggable,
+    isH265: isH265
   }), children);
 }
 
@@ -2579,7 +2590,8 @@ function VideoTools({
   leftMidExtContents,
   rightExtContents,
   rightMidExtContents,
-  errorReloadTimer
+  errorReloadTimer,
+  isH265
 }) {
   if (!playerObj) {
     return /*#__PURE__*/React.createElement(NoSource, null);
@@ -2587,7 +2599,8 @@ function VideoTools({
 
   return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(VideoMessage, {
     api: playerObj.api,
-    event: playerObj.event
+    event: playerObj.event,
+    isH265: isH265
   }), draggable && /*#__PURE__*/React.createElement(DragEvent, {
     playContainer: playerObj.playContainer,
     api: playerObj.api,
@@ -3043,7 +3056,8 @@ function VideoTools$1({
 
   return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(VideoMessage, {
     api: playerObj.api,
-    event: playerObj.event
+    event: playerObj.event,
+    isH265: false
   }), draggable && /*#__PURE__*/React.createElement(DragEvent, {
     playContainer: playerObj.playContainer,
     api: playerObj.api,
