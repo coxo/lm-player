@@ -170,7 +170,7 @@ function VideoTools({
   }
   return (
     <>
-      <VideoMessage api={playerObj.api} event={playerObj.event} />
+      <VideoMessage api={playerObj.api} event={playerObj.event} isH265={false} />
       {draggable && <DragEvent playContainer={playerObj.playContainer} api={playerObj.api} event={playerObj.event} />}
       {!hideContrallerBar && (
         <ContrallerEvent event={playerObj.event} playContainer={playerObj.playContainer}>

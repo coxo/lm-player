@@ -3,7 +3,7 @@ import IconFont from './iconfont'
 import EventName from './event/eventName'
 import './style/message.less'
 
-function VideoMessage({ event, api }) {
+function VideoMessage({ event, api, isH265 }) {
   const [state, setState] = useState({ status: null, errorTimer: null, loading: false })
 
   const message = useMemo(() => {
@@ -53,8 +53,15 @@ function VideoMessage({ event, api }) {
       event.off(EventName.CLEAR_ERROR_TIMER, reloadSuccess)
     }
   }, [event])
+  
 
-  const { loading, status } = state
+  let { loading, status } = state
+
+  if(isH265){
+    loading = false;
+    status = null;
+  }
+
   return (
     <div className={`lm-player-message-mask ${loading || status === 'fail' ? 'lm-player-mask-loading-animation' : ''}`}>
       <IconFont

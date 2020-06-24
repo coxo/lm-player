@@ -10,11 +10,17 @@ import DragEvent from './event/dragEvent'
 import Api from './api'
 import LiveHeart from './live_heart'
 import PropTypes from 'prop-types'
+import YUVPlayer from './yuv/player'
+
 import './style/index.less'
+import './yuv/player.css'
 
 function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinline, loop, preload, children, onInitPlayer, ...props }) {
   const playContainerRef = useRef(null)
   const [playerObj, setPlayerObj] = useState(null)
+  const [isH265, setH265] = useState(false)
+  const DEMUX_MSG_EVENT = 'demux_msg'
+
   useEffect(() => {
     if (!file) {
       return
@@ -26,6 +32,16 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
     const formartType = getVideoType(file)
     if (formartType === 'flv' || type === 'flv') {
       playerObject.flv = createFlvPlayer(playerObject.video, { ...props, file })
+
+      playerObject.flv.on(DEMUX_MSG_EVENT, (data) => {
+        console.info(data)
+        if (data !== 7) {
+          playerObject.api.unload()
+          setH265(true)
+        }else{
+          setH265(false)
+        }
+      });
     }
     if (formartType === 'm3u8' || type === 'hls') {
       playerObject.hls = createHlsPlayer(playerObject.video, file)
@@ -50,7 +66,10 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
   return (
     <div className={`lm-player-container ${className}`} ref={playContainerRef}>
       <div className="player-mask-layout">
-        <video autoPlay={autoPlay} preload={preload} muted={muted} poster={poster} controls={false} playsInline={playsinline} loop={loop} />
+      {
+        !isH265?<video autoPlay={autoPlay} preload={preload} muted={muted} poster={poster} controls={false} playsInline={playsinline} loop={loop} />:
+        <YUVPlayer streamUrl={file} ratio='960*554'/>
+      }
       </div>
       <VideoTools
         playerObj={playerObj}
@@ -64,6 +83,7 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
         rightExtContents={props.rightExtContents}
         rightMidExtContents={props.rightMidExtContents}
         draggable={props.draggable}
+        isH265={isH265}
       />
       {children}
     </div>
@@ -81,14 +101,15 @@ function VideoTools({
   leftMidExtContents,
   rightExtContents,
   rightMidExtContents,
-  errorReloadTimer
+  errorReloadTimer,
+  isH265
 }) {
   if (!playerObj) {
     return <NoSource />
   }
   return (
     <>
-      <VideoMessage api={playerObj.api} event={playerObj.event} />
+      <VideoMessage api={playerObj.api} event={playerObj.event} isH265={isH265} />
       {draggable && <DragEvent playContainer={playerObj.playContainer} api={playerObj.api} event={playerObj.event} />}
       {!hideContrallerBar && (
         <ContrallerEvent event={playerObj.event} playContainer={playerObj.playContainer}>
