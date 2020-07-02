@@ -330,7 +330,7 @@ function IconFont({
   className = '',
   ...props
 }) {
-  return /*#__PURE__*/React.createElement("i", _extends({
+  return React.createElement("i", _extends({
     className: `lm-player-iconfont ${type} ${className}`
   }, props));
 }
@@ -417,7 +417,7 @@ class Slider extends React.Component {
       this.props.onChange && this.props.onChange(percent);
     };
 
-    this.sliderDomRef = /*#__PURE__*/React.createRef();
+    this.sliderDomRef = React.createRef();
     this.layoutDom = null;
     this.lineDom = null;
     this.dragDom = null;
@@ -498,32 +498,32 @@ class Slider extends React.Component {
       className = '',
       tipsY
     } = this.props;
-    return /*#__PURE__*/React.createElement("div", {
+    return React.createElement("div", {
       className: `slider-layout ${className}`,
       ref: this.sliderDomRef
-    }, /*#__PURE__*/React.createElement("div", {
+    }, React.createElement("div", {
       className: "slider-content"
-    }, /*#__PURE__*/React.createElement("div", {
+    }, React.createElement("div", {
       className: "slider-max-line"
-    }), /*#__PURE__*/React.createElement("div", {
+    }), React.createElement("div", {
       className: "slider-visibel-line",
       style: {
         width: `${availablePercent}%`
       }
-    }), /*#__PURE__*/React.createElement("div", {
+    }), React.createElement("div", {
       className: "slider-current-line",
       style: {
         width: `${value}%`
       }
-    }), this.props.children), /*#__PURE__*/React.createElement("div", {
+    }), this.props.children), React.createElement("div", {
       className: "slider-other-content"
-    }, /*#__PURE__*/React.createElement("div", {
+    }, React.createElement("div", {
       className: "drag-change-icon",
       draggable: false,
       style: {
         left: `${value}%`
       }
-    })), /*#__PURE__*/React.createElement(Tips, {
+    })), React.createElement(Tips, {
       visibel: showTips,
       className: "lm-player-slide-tips",
       style: {
@@ -569,7 +569,7 @@ function Tips({
     return null;
   }
 
-  return /*#__PURE__*/ReactDOM.createPortal( /*#__PURE__*/React.createElement("div", {
+  return ReactDOM.createPortal(React.createElement("div", {
     className: className,
     style: style
   }, children), ele.current);
@@ -592,7 +592,7 @@ function Bar({
     return null;
   }
 
-  return /*#__PURE__*/React.createElement("span", _extends({
+  return React.createElement("span", _extends({
     className: `contraller-bar-item ${className}`
   }, props), children);
 }
@@ -671,31 +671,31 @@ function LeftBar({
     isHistory ? reloadHistory() : api.reload();
     event.emit(EventName.CLEAR_ERROR_TIMER);
   }, [event, isHistory, api]);
-  return /*#__PURE__*/React.createElement("div", {
+  return React.createElement("div", {
     className: "contraller-left-bar"
-  }, leftExtContents, /*#__PURE__*/React.createElement(Bar, {
+  }, leftExtContents, React.createElement(Bar, {
     visibel: !isLive
-  }, /*#__PURE__*/React.createElement(IconFont, {
+  }, React.createElement(IconFont, {
     onClick: changePlayStatus,
     type: statusIconClassName,
     title: statusText
-  })), /*#__PURE__*/React.createElement(Bar, {
+  })), React.createElement(Bar, {
     className: `contraller-bar-volume ${sliderClassName}`,
     onMouseOver: () => setOpenSliderVolume(true),
     onMouseOut: () => setOpenSliderVolume(false)
-  }, /*#__PURE__*/React.createElement(IconFont, {
+  }, React.createElement(IconFont, {
     onClick: mutedChantgeStatus,
     type: volumeIcon,
     title: "\u97F3\u91CF"
-  }), /*#__PURE__*/React.createElement("div", {
+  }), React.createElement("div", {
     className: "volume-slider-layout"
-  }, /*#__PURE__*/React.createElement(Slider, {
+  }, React.createElement(Slider, {
     className: "volume-slider",
     currentPercent: volumePercent,
     onChange: onChangeVolume,
-    renderTips: precent => /*#__PURE__*/React.createElement("span", null, Math.round(precent * 100), "%"),
+    renderTips: precent => React.createElement("span", null, Math.round(precent * 100), "%"),
     tipsY: -2
-  }))), /*#__PURE__*/React.createElement(Bar, null, /*#__PURE__*/React.createElement(IconFont, {
+  }))), React.createElement(Bar, null, React.createElement(IconFont, {
     onClick: reload,
     type: "lm-player-Refresh_Main",
     title: "\u91CD\u8F7D"
@@ -740,25 +740,25 @@ function RightBar({
       api.setPosition(position, true);
     }
   }, [api, playContainer]);
-  return /*#__PURE__*/React.createElement("div", {
+  return React.createElement("div", {
     className: "contraller-right-bar"
-  }, rightMidExtContents, scale && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Bar, null, /*#__PURE__*/React.createElement(IconFont, {
+  }, rightMidExtContents, scale && React.createElement(React.Fragment, null, React.createElement(Bar, null, React.createElement(IconFont, {
     title: "\u7F29\u5C0F",
     onClick: () => setScale(-0.2),
     type: 'lm-player-ZoomOut_Main'
-  })), /*#__PURE__*/React.createElement(Bar, null, /*#__PURE__*/React.createElement(IconFont, {
+  })), React.createElement(Bar, null, React.createElement(IconFont, {
     title: "\u590D\u4F4D",
     onClick: () => setScale(1, true),
     type: 'lm-player-ZoomDefault_Main'
-  })), /*#__PURE__*/React.createElement(Bar, null, /*#__PURE__*/React.createElement(IconFont, {
+  })), React.createElement(Bar, null, React.createElement(IconFont, {
     title: "\u653E\u5927",
     onClick: () => setScale(0.2),
     type: 'lm-player-ZoomIn_Main'
-  }))), snapshot && /*#__PURE__*/React.createElement(Bar, null, /*#__PURE__*/React.createElement(IconFont, {
+  }))), snapshot && React.createElement(Bar, null, React.createElement(IconFont, {
     title: "\u622A\u56FE",
     onClick: () => snapshot(api.snapshot()),
     type: "lm-player-SearchBox"
-  })), /*#__PURE__*/React.createElement(Bar, null, /*#__PURE__*/React.createElement(IconFont, {
+  })), React.createElement(Bar, null, React.createElement(IconFont, {
     title: isfull ? '窗口' : '全屏',
     onClick: fullscreen,
     type: isfull ? 'lm-player-ExitFull_Main' : 'lm-player-Full_Main'
@@ -788,17 +788,17 @@ function ScaleBar({
       api.setPosition(position, true);
     }
   }, [api, playContainer]);
-  return /*#__PURE__*/React.createElement("div", {
+  return React.createElement("div", {
     className: "contraller-scale-bar"
-  }, scale && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Bar, null, /*#__PURE__*/React.createElement(IconFont, {
+  }, scale && React.createElement(React.Fragment, null, React.createElement(Bar, null, React.createElement(IconFont, {
     title: "\u7F29\u5C0F",
     onClick: () => setScale(-0.2),
     type: 'lm-player-ZoomOut_Main'
-  })), /*#__PURE__*/React.createElement(Bar, null, /*#__PURE__*/React.createElement(IconFont, {
+  })), React.createElement(Bar, null, React.createElement(IconFont, {
     title: "\u590D\u4F4D",
     onClick: () => setScale(1, true),
     type: 'lm-player-ZoomDefault_Main'
-  })), /*#__PURE__*/React.createElement(Bar, null, /*#__PURE__*/React.createElement(IconFont, {
+  })), React.createElement(Bar, null, React.createElement(IconFont, {
     title: "\u653E\u5927",
     onClick: () => setScale(0.2),
     type: 'lm-player-ZoomIn_Main'
@@ -821,9 +821,9 @@ function ContrallerBar({
   leftExtContents,
   leftMidExtContents
 }) {
-  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+  return React.createElement(React.Fragment, null, React.createElement("div", {
     className: `contraller-bar-layout ${!visibel ? 'hide-contraller-bar' : ''}`
-  }, /*#__PURE__*/React.createElement(LeftBar, {
+  }, React.createElement(LeftBar, {
     api: api,
     event: event,
     video: video,
@@ -832,16 +832,16 @@ function ContrallerBar({
     isLive: isLive,
     leftMidExtContents: leftMidExtContents,
     leftExtContents: leftExtContents
-  }), /*#__PURE__*/React.createElement(RightBar, {
+  }), React.createElement(RightBar, {
     api: api,
     event: event,
     playContainer: playContainer,
     snapshot: snapshot,
     rightExtContents: rightExtContents,
     rightMidExtContents: rightMidExtContents
-  })), /*#__PURE__*/React.createElement("div", {
+  })), React.createElement("div", {
     className: `contraller-scale-layout ${!visibel ? 'hide-contraller-bar' : ''}`
-  }, /*#__PURE__*/React.createElement(ScaleBar, {
+  }, React.createElement(ScaleBar, {
     api: api,
     playContainer: playContainer,
     scale: scale
@@ -877,7 +877,7 @@ function ContrallerEvent({
     playContainer.addEventListener('mousemove', showContraller, false);
     playContainer.addEventListener('mouseout', hideContraller, false);
   });
-  return React.Children.map(children, child => /*#__PURE__*/React.isValidElement(child) ? /*#__PURE__*/React.cloneElement(child, {
+  return React.Children.map(children, child => React.isValidElement(child) ? React.cloneElement(child, {
     visibel
   }) : child);
 }
@@ -972,20 +972,20 @@ function VideoMessage({
     status = null;
   }
 
-  return /*#__PURE__*/React.createElement("div", {
+  return React.createElement("div", {
     className: `lm-player-message-mask ${loading || status === 'fail' ? 'lm-player-mask-loading-animation' : ''}`
-  }, /*#__PURE__*/React.createElement(IconFont, {
+  }, React.createElement(IconFont, {
     type: status === 'fail' ? 'lm-player-YesorNo_No_Dark' : 'lm-player-Loading',
     className: `${loading && status !== 'fail' ? 'lm-player-loading-animation' : status === 'fail' ? 'lm-player-loadfail' : ''} lm-player-loading-icon`
-  }), /*#__PURE__*/React.createElement("span", {
+  }), React.createElement("span", {
     className: "lm-player-message"
   }, message));
 }
 
 const NoSource = () => {
-  return /*#__PURE__*/React.createElement("div", {
+  return React.createElement("div", {
     className: "lm-player-message-mask lm-player-mask-loading-animation"
-  }, /*#__PURE__*/React.createElement(IconFont, {
+  }, React.createElement(IconFont, {
     style: {
       fontSize: 80
     },
@@ -1054,22 +1054,22 @@ function TineLine({
   const renderTimeLineTips = percent => {
     const currentTime = percent * duration;
     const time = timeStamp(currentTime);
-    return /*#__PURE__*/React.createElement("span", null, time);
+    return React.createElement("span", null, time);
   };
 
-  return /*#__PURE__*/React.createElement("div", {
+  return React.createElement("div", {
     className: `video-time-line-layout ${!visibel ? 'hide-time-line' : ''}`
-  }, /*#__PURE__*/React.createElement(IconFont, {
+  }, React.createElement(IconFont, {
     type: "lm-player-PrevFast",
     onClick: () => api.backWind(),
     className: "time-line-action-item"
-  }), /*#__PURE__*/React.createElement(Slider, {
+  }), React.createElement(Slider, {
     className: "time-line-box",
     currentPercent: playPercent,
     availablePercent: bufferedPercent,
     onChange: changePlayTime,
     renderTips: renderTimeLineTips
-  }), /*#__PURE__*/React.createElement(IconFont, {
+  }), React.createElement(IconFont, {
     type: "lm-player-NextFast_Light",
     onClick: () => api.fastForward(),
     className: "time-line-action-item"
@@ -1160,7 +1160,7 @@ function ErrorEvent({
       clearTimeout(reloadTimer.current);
     };
   }, [errorTimer, api, event, flv, hls]);
-  return /*#__PURE__*/React.createElement(React.Fragment, null);
+  return React.createElement(React.Fragment, null);
 }
 
 class DragEvent extends React.Component {
@@ -1170,7 +1170,7 @@ class DragEvent extends React.Component {
     this.openDrag = e => {
       this.position.start = [e.pageX, e.pageY];
       this.dragDom.addEventListener('mousemove', this.moveChange);
-      this.dragDom.addEventListener('mouseup', this.stopDrag);
+      document.body.addEventListener('mouseup', this.stopDrag);
     };
 
     this.moveChange = e => {
@@ -1188,7 +1188,7 @@ class DragEvent extends React.Component {
 
     this.stopDrag = () => {
       this.dragDom.removeEventListener('mousemove', this.moveChange);
-      this.dragDom.removeEventListener('mouseup', this.stopDrag);
+      document.body.removeEventListener('mouseup', this.stopDrag);
       this.transformChange();
     };
 
@@ -1659,7 +1659,7 @@ function LiveHeart({
       BrowserTab.removeEventListener(browserTabChange);
     };
   }, [api]);
-  return /*#__PURE__*/React.createElement(React.Fragment, null);
+  return React.createElement(React.Fragment, null);
 }
 
 const ControllerStatus = {
@@ -2175,7 +2175,7 @@ function IconFont$1({
   className = '',
   ...props
 }) {
-  return /*#__PURE__*/React.createElement("i", _extends$1({
+  return React.createElement("i", _extends$1({
     className: `yuv-player-iconfont ${type} ${className}`
   }, props));
 }
@@ -2186,9 +2186,9 @@ IconFont$1.propTypes = {
 };
 
 const NoSource$1 = () => {
-  return /*#__PURE__*/React.createElement("div", {
+  return React.createElement("div", {
     className: "yuv-player-message-mask yuv-player-mask-loading-animation"
-  }, /*#__PURE__*/React.createElement(IconFont$1, {
+  }, React.createElement(IconFont$1, {
     style: {
       fontSize: 80
     },
@@ -2226,12 +2226,12 @@ function ContentSource({
     }
   }, [status]);
   console.info(loading, status);
-  return /*#__PURE__*/React.createElement("div", {
+  return React.createElement("div", {
     className: `yuv-player-message-mask ${loading || status === 2 ? 'yuv-player-mask-loading-animation' : ''}`
-  }, /*#__PURE__*/React.createElement(IconFont$1, {
+  }, React.createElement(IconFont$1, {
     type: status === 2 ? 'yuv-player-YesorNo_No_Dark' : 'yuv-player-Loading',
     className: `${loading && status !== 2 ? 'yuv-player-loading-animation' : status === 2 ? 'yuv-player-loadfail' : ''} yuv-player-loading-icon`
-  }), /*#__PURE__*/React.createElement("span", {
+  }), React.createElement("span", {
     className: "yuv-player-message"
   }, msg));
 }
@@ -2242,9 +2242,9 @@ function YUVMessage({
   console.info('当前播放状态为：==>', playerState);
 
   if (playerState == 0) {
-    return /*#__PURE__*/React.createElement(NoSource$1, null);
+    return React.createElement(NoSource$1, null);
   } else {
-    return /*#__PURE__*/React.createElement(ContentSource, {
+    return React.createElement(ContentSource, {
       status: playerState
     });
   }
@@ -2260,7 +2260,7 @@ function Bar$1({
     return null;
   }
 
-  return /*#__PURE__*/React.createElement("span", _extends$1({
+  return React.createElement("span", _extends$1({
     className: `contraller-bar-item ${className}`
   }, props), children);
 }
@@ -2292,25 +2292,25 @@ function PlayerBar({
     //   api.setPosition(position, true)
     // }
   }, [api, playContainer]);
-  return /*#__PURE__*/React.createElement("div", {
+  return React.createElement("div", {
     className: "contraller-right-bar"
-  }, rightMidExtContents, scale && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Bar$1, null, /*#__PURE__*/React.createElement(IconFont$1, {
+  }, rightMidExtContents, scale && React.createElement(React.Fragment, null, React.createElement(Bar$1, null, React.createElement(IconFont$1, {
     title: "\u7F29\u5C0F",
     onClick: () => setScale(-0.2),
     type: 'yuv-player-ZoomOut_Main'
-  })), /*#__PURE__*/React.createElement(Bar$1, null, /*#__PURE__*/React.createElement(IconFont$1, {
+  })), React.createElement(Bar$1, null, React.createElement(IconFont$1, {
     title: "\u590D\u4F4D",
     onClick: () => setScale(1, true),
     type: 'yuv-player-ZoomDefault_Main'
-  })), /*#__PURE__*/React.createElement(Bar$1, null, /*#__PURE__*/React.createElement(IconFont$1, {
+  })), React.createElement(Bar$1, null, React.createElement(IconFont$1, {
     title: "\u653E\u5927",
     onClick: () => setScale(0.2),
     type: 'yuv-player-ZoomIn_Main'
-  }))), snapshot && /*#__PURE__*/React.createElement(Bar$1, null, /*#__PURE__*/React.createElement(IconFont$1, {
+  }))), snapshot && React.createElement(Bar$1, null, React.createElement(IconFont$1, {
     title: "\u622A\u56FE",
     onClick: () => snapshot(api.snapshot()),
     type: "yuv-player-SearchBox"
-  })), /*#__PURE__*/React.createElement(Bar$1, null, /*#__PURE__*/React.createElement(IconFont$1, {
+  })), React.createElement(Bar$1, null, React.createElement(IconFont$1, {
     title: '全屏',
     onClick: fullscreen,
     type: 'yuv-player-Full_Main'
@@ -2342,9 +2342,9 @@ function ContrallerBar$1({
   leftExtContents,
   leftMidExtContents
 }) {
-  return /*#__PURE__*/React.createElement("div", {
+  return React.createElement("div", {
     className: `contraller-bar-layout ${!visibel ? 'hide-contraller-bar' : ''}`
-  }, /*#__PURE__*/React.createElement(PlayerBar, {
+  }, React.createElement(PlayerBar, {
     snapshot: "true"
   }));
 }
@@ -2356,7 +2356,7 @@ ContrallerBar$1.propTypes = {
 class YUVPlayer extends React.Component {
   constructor(props) {
     super(props);
-    this.currentCanvas = /*#__PURE__*/React.createRef();
+    this.currentCanvas = React.createRef();
     this.websocket = null;
     this.SOCKET_URL = 'ws://localhost:15080/transcoding';
     const {
@@ -2466,13 +2466,13 @@ class YUVPlayer extends React.Component {
     const {
       PLAYER_STATE
     } = this.state;
-    return /*#__PURE__*/React.createElement("div", {
+    return React.createElement("div", {
       class: "yuv-player-comp"
-    }, /*#__PURE__*/React.createElement(YUVMessage, {
+    }, React.createElement(YUVMessage, {
       playerState: PLAYER_STATE
-    }), /*#__PURE__*/React.createElement(ContrallerBar$1, null), /*#__PURE__*/React.createElement("div", {
+    }), React.createElement(ContrallerBar$1, null), React.createElement("div", {
       class: "row player-container"
-    }, /*#__PURE__*/React.createElement("canvas", {
+    }, React.createElement("canvas", {
       class: "player-canvas-render",
       ref: "currentCanvas"
     })));
@@ -2547,12 +2547,12 @@ function SinglePlayer({
       }
     };
   }, [file]);
-  return /*#__PURE__*/React.createElement("div", {
+  return React.createElement("div", {
     className: `lm-player-container ${className}`,
     ref: playContainerRef
-  }, /*#__PURE__*/React.createElement("div", {
+  }, React.createElement("div", {
     className: "player-mask-layout"
-  }, !isH265 ? /*#__PURE__*/React.createElement("video", {
+  }, !isH265 ? React.createElement("video", {
     autoPlay: autoPlay,
     preload: preload,
     muted: muted,
@@ -2560,10 +2560,10 @@ function SinglePlayer({
     controls: false,
     playsInline: playsinline,
     loop: loop
-  }) : /*#__PURE__*/React.createElement(YUVPlayer, {
+  }) : React.createElement(YUVPlayer, {
     streamUrl: file,
     ratio: "960*554"
-  })), /*#__PURE__*/React.createElement(VideoTools, {
+  })), React.createElement(VideoTools, {
     playerObj: playerObj,
     isLive: props.isLive,
     hideContrallerBar: props.hideContrallerBar,
@@ -2594,21 +2594,21 @@ function VideoTools({
   isH265
 }) {
   if (!playerObj) {
-    return /*#__PURE__*/React.createElement(NoSource, null);
+    return React.createElement(NoSource, null);
   }
 
-  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(VideoMessage, {
+  return React.createElement(React.Fragment, null, React.createElement(VideoMessage, {
     api: playerObj.api,
     event: playerObj.event,
     isH265: isH265
-  }), draggable && /*#__PURE__*/React.createElement(DragEvent, {
+  }), draggable && React.createElement(DragEvent, {
     playContainer: playerObj.playContainer,
     api: playerObj.api,
     event: playerObj.event
-  }), !hideContrallerBar && /*#__PURE__*/React.createElement(ContrallerEvent, {
+  }), !hideContrallerBar && React.createElement(ContrallerEvent, {
     event: playerObj.event,
     playContainer: playerObj.playContainer
-  }, /*#__PURE__*/React.createElement(ContrallerBar, {
+  }, React.createElement(ContrallerBar, {
     api: playerObj.api,
     event: playerObj.event,
     playContainer: playerObj.playContainer,
@@ -2621,16 +2621,16 @@ function VideoTools({
     isLive: isLive,
     leftExtContents: leftExtContents,
     leftMidExtContents: leftMidExtContents
-  }), !isLive && /*#__PURE__*/React.createElement(TineLine, {
+  }), !isLive && React.createElement(TineLine, {
     api: playerObj.api,
     event: playerObj.event
-  })), /*#__PURE__*/React.createElement(ErrorEvent, {
+  })), React.createElement(ErrorEvent, {
     flv: playerObj.flv,
     hls: playerObj.hls,
     api: playerObj.api,
     event: playerObj.event,
     errorReloadTimer: errorReloadTimer
-  }), isLive && /*#__PURE__*/React.createElement(LiveHeart, {
+  }), isLive && React.createElement(LiveHeart, {
     api: playerObj.api
   }));
 }
@@ -2793,7 +2793,7 @@ function TineLine$1({
   const renderTimeLineTips = percent => {
     const currentTime = percent * historyList.duration * 1000;
     const date = dateFormat(historyList.beginDate + currentTime);
-    return /*#__PURE__*/React.createElement("span", null, date);
+    return React.createElement("span", null, date);
   };
 
   const {
@@ -2806,22 +2806,22 @@ function TineLine$1({
   const currentIndexTime = useMemo(() => currentLine.length === 0 ? 0 : currentLine.length > 1 ? currentLine.reduce((p, c) => p + c) : currentLine[0], [currentLine]);
   const playPercent = useMemo(() => currentTime / historyList.duration * 100 + currentIndexTime, [currentIndexTime, historyList, currentTime]);
   const bufferedPercent = useMemo(() => buffered / historyList.duration * 100 + currentIndexTime, [historyList, currentIndexTime, buffered]);
-  return /*#__PURE__*/React.createElement("div", {
+  return React.createElement("div", {
     className: `video-time-line-layout ${!visibel ? 'hide-time-line' : ''}`
-  }, /*#__PURE__*/React.createElement(IconFont, {
+  }, React.createElement(IconFont, {
     type: "lm-player-PrevFast",
     onClick: () => api.backWind(),
     className: "time-line-action-item"
-  }), /*#__PURE__*/React.createElement(Slider, {
+  }), React.createElement(Slider, {
     className: "time-line-box",
     currentPercent: isEnd ? '100' : playPercent,
     availablePercent: bufferedPercent,
     onChange: changePlayTime,
     renderTips: renderTimeLineTips
-  }, /*#__PURE__*/React.createElement(React.Fragment, null, lineList.map((v, i) => {
+  }, React.createElement(React.Fragment, null, lineList.map((v, i) => {
     const currentSizeLine = lineList.filter((v, i2) => i2 < i).map(v => v.size);
     const currentIndexSize = currentSizeLine.length === 0 ? 0 : currentSizeLine.length > 1 ? currentSizeLine.reduce((p, c) => p + c) : currentSizeLine[0];
-    return /*#__PURE__*/React.createElement("div", {
+    return React.createElement("div", {
       className: `history-time-line-item ${v.disabled ? 'history-time-line-disabled' : ''}`,
       key: i,
       style: {
@@ -2829,7 +2829,7 @@ function TineLine$1({
         left: `${currentIndexSize}%`
       }
     });
-  }))), /*#__PURE__*/React.createElement(IconFont, {
+  }))), React.createElement(IconFont, {
     type: "lm-player-NextFast_Light",
     onClick: () => api.fastForward(),
     className: "time-line-action-item"
@@ -2863,7 +2863,7 @@ function PlayEnd({
       event.removeEventListener('ended', endedHandle, false);
     };
   }, [event, playIndex, changePlayIndex]);
-  return /*#__PURE__*/React.createElement(React.Fragment, null);
+  return React.createElement(React.Fragment, null);
 }
 
 PlayEnd.propTypes = {
@@ -2925,19 +2925,19 @@ function HistoryPlayer({
   }, [playIndex, playerObj, playerObj, historyList]);
   const changePlayIndex = useCallback(index => {
     if (index > historyList.fragments.length - 1) {
-      return playerObj.event && playerObj.event.emit(EventName.HISTORY_PLAY_END);
+      return playerObj && playerObj.event && playerObj.event.emit(EventName.HISTORY_PLAY_END);
     }
 
     if (!historyList.fragments[index].file) {
-      changePlayIndex(index + 1);
+      return changePlayIndex(index + 1);
     }
 
-    if (playerObj.event) {
+    if (playerObj && playerObj.event) {
       playerObj.event.emit(EventName.CHANGE_PLAY_INDEX, index);
     }
 
     setPlayStatus([index, 0]);
-  }, [playerObj]);
+  }, [playerObj, historyList]);
   const reloadHistory = useCallback(() => {
     if (playStatus[0] === 0) {
       playerObj.api.seekTo(defaultSeekTime);
@@ -2946,6 +2946,11 @@ function HistoryPlayer({
     setPlayStatus([0, 0]);
     playerObj.event.emit(EventName.RELOAD);
   }, [playerObj]);
+  useEffect(() => {
+    if (!file) {
+      changePlayIndex(playIndex + 1);
+    }
+  }, [file, playIndex, historyList]);
   useEffect(() => {
     if (!file) {
       return;
@@ -2993,16 +2998,12 @@ function HistoryPlayer({
       }
     };
   }, [historyList, file]);
-  /**
-   * 根据时间计算当前对应的播放索引
-   */
-
-  return /*#__PURE__*/React.createElement("div", {
+  return React.createElement("div", {
     className: `lm-player-container ${className}`,
     ref: playContainerRef
-  }, /*#__PURE__*/React.createElement("div", {
+  }, React.createElement("div", {
     className: "player-mask-layout"
-  }, /*#__PURE__*/React.createElement("video", {
+  }, React.createElement("video", {
     autoPlay: autoPlay,
     preload: preload,
     muted: muted,
@@ -3010,7 +3011,7 @@ function HistoryPlayer({
     controls: false,
     playsInline: playsinline,
     loop: loop
-  })), /*#__PURE__*/React.createElement(VideoTools$1, {
+  })), React.createElement(VideoTools$1, {
     defaultTime: defaultSeekTime,
     playerObj: playerObj,
     isLive: props.isLive,
@@ -3051,21 +3052,21 @@ function VideoTools$1({
   defaultTime
 }) {
   if (!playerObj) {
-    return /*#__PURE__*/React.createElement(NoSource, null);
+    return React.createElement(NoSource, null);
   }
 
-  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(VideoMessage, {
+  return React.createElement(React.Fragment, null, React.createElement(VideoMessage, {
     api: playerObj.api,
     event: playerObj.event,
     isH265: false
-  }), draggable && /*#__PURE__*/React.createElement(DragEvent, {
+  }), draggable && React.createElement(DragEvent, {
     playContainer: playerObj.playContainer,
     api: playerObj.api,
     event: playerObj.event
-  }), !hideContrallerBar && /*#__PURE__*/React.createElement(ContrallerEvent, {
+  }), !hideContrallerBar && React.createElement(ContrallerEvent, {
     event: playerObj.event,
     playContainer: playerObj.playContainer
-  }, /*#__PURE__*/React.createElement(ContrallerBar, {
+  }, React.createElement(ContrallerBar, {
     api: playerObj.api,
     event: playerObj.event,
     playContainer: playerObj.playContainer,
@@ -3079,7 +3080,7 @@ function VideoTools$1({
     leftExtContents: leftExtContents,
     leftMidExtContents: leftMidExtContents,
     reloadHistory: reloadHistory
-  }), /*#__PURE__*/React.createElement(TineLine$1, {
+  }), React.createElement(TineLine$1, {
     defaultTime: defaultTime,
     changePlayIndex: changePlayIndex,
     historyList: historyList,
@@ -3087,7 +3088,7 @@ function VideoTools$1({
     seekTo: seekTo,
     api: playerObj.api,
     event: playerObj.event
-  })), /*#__PURE__*/React.createElement(ErrorEvent, {
+  })), React.createElement(ErrorEvent, {
     changePlayIndex: changePlayIndex,
     playIndex: playIndex,
     isHistory: true,
@@ -3096,7 +3097,7 @@ function VideoTools$1({
     api: playerObj.api,
     event: playerObj.event,
     errorReloadTimer: errorReloadTimer
-  }), /*#__PURE__*/React.createElement(PlayEnd, {
+  }), React.createElement(PlayEnd, {
     event: playerObj.event,
     changePlayIndex: changePlayIndex,
     playIndex: playIndex
@@ -3154,7 +3155,7 @@ function createPlayer({
   onInitPlayer,
   ...props
 }) {
-  ReactDOM.render( /*#__PURE__*/React.createElement(SinglePlayer, _extends({}, props, {
+  ReactDOM.render(React.createElement(SinglePlayer, _extends({}, props, {
     onInitPlayer: player => {
       player.destroy = function () {
         ReactDOM.unmountComponentAtNode(container);
@@ -3170,7 +3171,7 @@ function createHistoryPlayer({
   onInitPlayer,
   ...props
 }) {
-  ReactDOM.render( /*#__PURE__*/React.createElement(HistoryPlayer, _extends({}, props, {
+  ReactDOM.render(React.createElement(HistoryPlayer, _extends({}, props, {
     onInitPlayer: player => {
       player.destroy = function () {
         ReactDOM.unmountComponentAtNode(container);
