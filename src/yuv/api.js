@@ -1,8 +1,9 @@
-import { fullscreen, isFullscreen, exitFullscreen } from './util'
-import EventName from './event/eventName'
-export default class Api {
-  constructor({ video, playContainer, event, flv, hls }) {
-    this.player = video
+import { fullscreen, isFullscreen, exitFullscreen } from '../utils/util'
+import EventName from '../event/eventName'
+
+export default class YUVApi {
+  constructor({ player, playContainer, event, flv, hls }) {
+    this.player = player
     this.playContainer = playContainer
     this.flv = flv
     this.hls = hls
@@ -66,7 +67,7 @@ export default class Api {
       this.flv.unload()
       this.flv.load()
     }
-    this.player.currentTime = seconds
+    // this.player.currentTime = seconds
     if (!noEmit) {
       this.event.emit(EventName.SEEK, seconds)
     }
@@ -104,10 +105,10 @@ export default class Api {
     this.player.volume = fraction
   }
   mute() {
-    this.player.muted = true
+   // this.player.muted = true
   }
   unmute() {
-    this.player.muted = false
+   // this.player.muted = false
   }
 
   /**
@@ -166,7 +167,7 @@ export default class Api {
   getBufferedTime() {
     if (!this.player) return null
     const { buffered } = this.player
-    if (buffered.length === 0) {
+    if (!buffered || buffered.length === 0) {
       return [0, 0]
     }
     const end = buffered.end(buffered.length - 1)
@@ -202,51 +203,22 @@ export default class Api {
    * 视频截屏方法
    */
   snapshot() {
-    let canvas = document.createElement('canvas')
-    let ctx = canvas.getContext('2d')
-    canvas.width = this.player.videoWidth
-    canvas.height = this.player.videoHeight
-    ctx.drawImage(this.player, 0, 0, canvas.width, canvas.height)
-    setTimeout(() => {
-      canvas.remove()
-      canvas = null
-      ctx = null
-    }, 200)
-    return canvas.toDataURL()
+    return this.player && this.player.getDom().toDataURL()
   }
   setScale(num, isRest = false) {
-    let scale = this.scale + num
-    if (isRest) {
-      scale = num
-    } else {
-      if (scale < 1) {
-        scale = 1
-      }
-      if (scale > 3) {
-        scale = 3
-      }
-    }
-    this.scale = scale
-    this.player.style.transition = 'transform 0.3s'
-    this.__setTransform()
-    this.event.emit(EventName.TRANSFORM)
-    setTimeout(() => {
-      this.player.style.transition = 'unset'
-    }, 1000)
+   console.info('正在开发中...')
   }
   getScale() {
     return this.scale
   }
   setPosition(position, isAnimate) {
-    this.position = position
-    this.player.style.transition = isAnimate ? 'transform 0.3s' : 'unset'
-    this.__setTransform()
+    console.info('正在开发中...')
   }
   getPosition() {
     return this.position
   }
   __setTransform() {
-    this.player.style.transform = `scale(${this.scale}) translate(${this.position[0]}px,${this.position[1]}px)`
+    this.player && (this.player.style.transform = `scale(${this.scale}) translate(${this.position[0]}px,${this.position[1]}px)`)
   }
   getApi() {
     return {

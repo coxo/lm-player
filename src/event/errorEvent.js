@@ -9,6 +9,11 @@ function ErrorEvent({ event, api, errorReloadTimer, flv, hls, changePlayIndex, i
   useEffect(() => {
     const errorHandle = (...args) => {
       console.error(...args)
+      if(args && args.length > 2 && args[2].code == 11){
+        api.unload();
+        api.load();
+        return;
+      }
       errorInfo.current = args
       setErrorTime(errorTimer + 1)
     }
@@ -61,7 +66,6 @@ function ErrorEvent({ event, api, errorReloadTimer, flv, hls, changePlayIndex, i
     if (errorTimer > errorReloadTimer) {
       return isHistory ? changePlayIndex(playIndex + 1) : event.emit(EventName.RELOAD_FAIL), api.unload()
     }
-   
 
     console.warn(`视频播放出错，正在进行重连${errorTimer}`)
     reloadTimer.current = setTimeout(() => {
@@ -70,7 +74,7 @@ function ErrorEvent({ event, api, errorReloadTimer, flv, hls, changePlayIndex, i
     }, 2 * 1000)
 
     return () => {
-      clearTimeout(reloadTimer.current)
+     clearTimeout(reloadTimer.current)
     }
   }, [errorTimer, api, event, flv, hls])
 

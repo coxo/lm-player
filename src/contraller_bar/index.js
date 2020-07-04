@@ -20,6 +20,7 @@ function ContrallerBar({
   isLive,
   leftExtContents,
   leftMidExtContents,
+  isPlus,
 }) {
   return (
     <>
@@ -33,6 +34,7 @@ function ContrallerBar({
           isLive={isLive}
           leftMidExtContents={leftMidExtContents}
           leftExtContents={leftExtContents}
+          isPlus={isPlus}
         />
         <RightBar
           api={api}

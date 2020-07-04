@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import ReactDOM from 'react-dom'
 import PropTypes from 'prop-types'
-import './style/slider.less'
+import '../style/slider.less'
 
 class Slider extends React.Component {
   constructor(props) {

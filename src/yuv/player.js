@@ -1,6 +1,5 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
-import PropTypes from 'prop-types';
 
 const ControllerStatus = {
   kIdle: 0,
@@ -75,6 +74,7 @@ class WebSocketController {
     this._onCommand = null;
     this._onSuccess = null;
     this._onOpen = null;
+    console.log('close webscoket!');
   }
 
   isWorking() {
@@ -299,6 +299,8 @@ class WebGLPlayer {
 
     let vertexShaderSource = `
         attribute lowp vec4 a_vertexPosition;
+        uniform float px;
+        uniform float py;
         attribute vec2 a_texturePosition;
         varying vec2 v_texCoord;
         void main() {
@@ -457,14 +459,17 @@ class WebGLPlayer {
     gl.clearColor(0, 0, 0, 0); // 清空缓冲 颜色缓冲区（COLOR_BUFFER_BIT）
 
     gl.clear(gl.COLOR_BUFFER_BIT);
-    let uOffset = width * height;
+    let uOffset = width * height; // 四分之一的长乘宽 获取U
+
     let vOffset = (width >> 1) * (height >> 1);
-    gl.bindTexture(gl.TEXTURE_2D, gl.y); // 填充纹理
+    gl.bindTexture(gl.TEXTURE_2D, gl.y); // 填充Y纹理,Y 的宽度和高度就是 width，和 height，存储的位置就是data.subarray(0, width * height)
 
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, width, height, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, data.subarray(0, uOffset));
-    gl.bindTexture(gl.TEXTURE_2D, gl.u);
+    gl.bindTexture(gl.TEXTURE_2D, gl.u); // 填充U纹理,Y 的宽度和高度就是 width/2 和 height/2，存储的位置就是data.subarray(width * height, width/2 * height/2 + width * height)
+
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, width >> 1, height >> 1, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, data.subarray(uOffset, uOffset + vOffset));
-    gl.bindTexture(gl.TEXTURE_2D, gl.v);
+    gl.bindTexture(gl.TEXTURE_2D, gl.v); // 填充U纹理,Y 的宽度和高度就是 width/2 和 height/2，存储的位置就是data.subarray(width/2 * height/2 + width * height, data.length)
+
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, width >> 1, height >> 1, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, data.subarray(uOffset + vOffset, data.length));
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
@@ -492,209 +497,12 @@ class WebGLPlayer {
 
 }
 
-function _extends() {
-  _extends = Object.assign || function (target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i];
-
-      for (var key in source) {
-        if (Object.prototype.hasOwnProperty.call(source, key)) {
-          target[key] = source[key];
-        }
-      }
-    }
-
-    return target;
-  };
-
-  return _extends.apply(this, arguments);
-}
-
-function IconFont({
-  type,
-  className = '',
-  ...props
-}) {
-  return React.createElement("i", _extends({
-    className: `yuv-player-iconfont ${type} ${className}`
-  }, props));
-}
-IconFont.propTypes = {
-  type: PropTypes.string,
-  className: PropTypes.string
-};
-
-const NoSource = () => {
-  return React.createElement("div", {
-    className: "yuv-player-message-mask yuv-player-mask-loading-animation"
-  }, React.createElement(IconFont, {
-    style: {
-      fontSize: 80
-    },
-    type: "yuv-player-PlaySource",
-    title: "\u8BF7\u9009\u62E9\u89C6\u9891\u6E90"
-  }));
-};
-
-function ContentSource({
-  status
-}) {
-  const {
-    msg = '',
-    loading = true
-  } = useMemo(() => {
-    if (status == 1) {
-      return {
-        msg: '',
-        loading: false
-      };
-    }
-
-    if (status === 2) {
-      return {
-        msg: '视频错误',
-        loading: false
-      };
-    }
-
-    if (status === 3) {
-      return {
-        msg: '视频加载错误，正在进行重连...',
-        loading: true
-      };
-    }
-  }, [status]);
-  console.info(loading, status);
-  return React.createElement("div", {
-    className: `yuv-player-message-mask ${loading || status === 2 ? 'yuv-player-mask-loading-animation' : ''}`
-  }, React.createElement(IconFont, {
-    type: status === 2 ? 'yuv-player-YesorNo_No_Dark' : 'yuv-player-Loading',
-    className: `${loading && status !== 2 ? 'yuv-player-loading-animation' : status === 2 ? 'yuv-player-loadfail' : ''} yuv-player-loading-icon`
-  }), React.createElement("span", {
-    className: "yuv-player-message"
-  }, msg));
-}
-
-function YUVMessage({
-  playerState
-}) {
-  console.info('当前播放状态为：==>', playerState);
-
-  if (playerState == 0) {
-    return React.createElement(NoSource, null);
-  } else {
-    return React.createElement(ContentSource, {
-      status: playerState
-    });
-  }
-}
-
-function Bar({
-  visibel = true,
-  className = '',
-  children,
-  ...props
-}) {
-  if (visibel === false) {
-    return null;
-  }
-
-  return React.createElement("span", _extends({
-    className: `contraller-bar-item ${className}`
-  }, props), children);
-}
-Bar.propTypes = {
-  visibel: PropTypes.bool,
-  className: PropTypes.string,
-  children: PropTypes.any
-};
-
-function PlayerBar({
-  playContainer,
-  api,
-  scale,
-  snapshot,
-  rightExtContents,
-  rightMidExtContents
-}) {
-  const [dep, setDep] = useState(Date.now()); // useEffect(() => {
-  const fullscreen = useCallback(() => {
-    // !isFullscreen(playContainer) ? api.requestFullScreen() : api.cancelFullScreen()
-    setDep(Date.now());
-  }, [api, playContainer]);
-  const setScale = useCallback((...args) => {// const dragDom = playContainer.querySelector('.player-mask-layout')
-    // api.setScale(...args)
-    // let position = computedBound(dragDom, api.getPosition(), api.getScale())
-    // if (position) {
-    //   api.setPosition(position, true)
-    // }
-  }, [api, playContainer]);
-  return React.createElement("div", {
-    className: "contraller-right-bar"
-  }, rightMidExtContents, scale && React.createElement(React.Fragment, null, React.createElement(Bar, null, React.createElement(IconFont, {
-    title: "\u7F29\u5C0F",
-    onClick: () => setScale(-0.2),
-    type: 'yuv-player-ZoomOut_Main'
-  })), React.createElement(Bar, null, React.createElement(IconFont, {
-    title: "\u590D\u4F4D",
-    onClick: () => setScale(1, true),
-    type: 'yuv-player-ZoomDefault_Main'
-  })), React.createElement(Bar, null, React.createElement(IconFont, {
-    title: "\u653E\u5927",
-    onClick: () => setScale(0.2),
-    type: 'yuv-player-ZoomIn_Main'
-  }))), snapshot && React.createElement(Bar, null, React.createElement(IconFont, {
-    title: "\u622A\u56FE",
-    onClick: () => snapshot(api.snapshot()),
-    type: "yuv-player-SearchBox"
-  })), React.createElement(Bar, null, React.createElement(IconFont, {
-    title:  '全屏',
-    onClick: fullscreen,
-    type:  'yuv-player-Full_Main'
-  })), rightExtContents);
-}
-
-PlayerBar.propTypes = {
-  api: PropTypes.object,
-  event: PropTypes.object,
-  playerProps: PropTypes.object,
-  playContainer: PropTypes.node,
-  reloadHistory: PropTypes.func,
-  isHistory: PropTypes.bool
-};
-
-function ContrallerBar({
-  playContainer,
-  snapshot,
-  rightExtContents,
-  rightMidExtContents,
-  scale,
-  visibel,
-  api,
-  event,
-  video,
-  isHistory,
-  reloadHistory,
-  isLive,
-  leftExtContents,
-  leftMidExtContents
-}) {
-  return React.createElement("div", {
-    className: `contraller-bar-layout ${!visibel ? 'hide-contraller-bar' : ''}`
-  }, React.createElement(PlayerBar, {
-    snapshot: "true"
-  }));
-}
-
-ContrallerBar.propTypes = {
-  visibel: PropTypes.bool
-};
-
 class YUVPlayer extends React.Component {
   constructor(props) {
     super(props);
     this.currentCanvas = React.createRef();
     this.websocket = null;
+    this.player = null;
     this.SOCKET_URL = 'ws://localhost:15080/transcoding';
     const {
       streamUrl,
@@ -702,19 +510,35 @@ class YUVPlayer extends React.Component {
     } = this.props;
     this.STREAM_URL = streamUrl;
     this.RATIO = ratio;
-    this.state = {
-      PLAYER_STATE: 0
-    };
+    this.errorTimer = 0;
+    this.reloadTimer = null;
+    this.errorFlag = 1;
+    this.setPlayerState(0);
+  }
+
+  setPlayerState(state) {
+    this.props.onPlayerState(state);
   }
 
   componentWillReceiveProps(nextProps) {
+    if (this.props.streamUrl !== nextProps.streamUrl) {
+      this.closeWebSocket();
+      this.STREAM_URL = nextProps.streamUrl;
+      this.openPlayer();
+    }
+
     if (this.props.ratio !== nextProps.ratio) {
       this.RATIO = nextProps.ratio;
-      this.RATIO && this.websocket.send(`{"commond":"modify", "url":"${this.RATIO}"}`);
+      this.RATIO && this.websocket && this.websocket.send(`{"commond":"modify", "url":"${this.RATIO}"}`);
     }
   }
 
-  componentDidMount() {
+  componentWillUnmount() {
+    this.closeWebSocket();
+    clearTimeout(this.reloadTimer);
+  }
+
+  openPlayer() {
     if (!this.STREAM_URL) {
       console.log('拉流地址为空！请检查配置');
       return;
@@ -723,28 +547,68 @@ class YUVPlayer extends React.Component {
     this._createScoket();
   }
 
-  _onComplete(e) {
-    console.info('_onComplete==>', e);
+  closeWebSocket() {
+    if (this.websocket) {
+      this.setPlayerState(4);
+      this.websocket.destroy();
+      this.websocket = null;
+    }
+
+    this.player && this.player.destroyfunction();
+  }
+
+  _onComplete(e) {// console.info('_onComplete==>', e)
   }
 
   _onError(e) {
     this.websocket = null;
+    this.setPlayerState(3);
+    this.errorTimer = this.errorTimer + 1;
+    const that = this;
     console.error(e);
+
+    if (this.errorTimer < 4 && errorFlag == 1) {
+      this.reloadTimer = setTimeout(() => {
+        console.warn(`视频播放出错，正在进行重连${that.errorTimer}`);
+
+        that._createScoket();
+      }, 2 * 1000);
+    }
+
+    if (e.code == 710047) {
+      this.errorFlag = 0;
+    }
   }
 
   _onCommand() {
-    // console.info('接收视频帧数据：',event);
     let bufferData = new Uint8Array(event.data);
     let ratioWidth = this.getRatioNumber(bufferData, [0, 2]);
     let ratioHeight = this.getRatioNumber(bufferData, [2, 4]);
     let canvas = ReactDOM.findDOMNode(this.refs['currentCanvas']);
-    let webglPlayer = new WebGLPlayer(canvas, {
+    this.loadYuv(canvas, ratioWidth, ratioHeight, event.data); // this.loadRGB(canvas,ratioWidth,ratioHeight,bufferData)
+  }
+
+  loadRGB(canvas, ratioWidth, ratioHeight, data) {
+    var canvasContext = canvas.getContext("2d");
+    var imgdata = canvasContext.createImageData(ratioHeight, ratioWidth);
+    var imgdatalen = imgdata.data.length;
+
+    for (var i = 0; i < imgdatalen; i += 4) {
+      imgdata.data[i + 0] = 0;
+      imgdata.data[i + 1] = 255;
+      imgdata.data[i + 2] = 0;
+      imgdata.data[i + 3] = 255;
+    }
+
+    canvasContext.putImageData(imgdata, 0, 0);
+  }
+
+  loadYuv(canvas, ratioWidth, ratioHeight, data) {
+    this.player = new WebGLPlayer(canvas, {
       preserveDrawingBuffer: false
     });
-    webglPlayer.setSizefunction(ratioWidth, ratioHeight, 1920);
-   // console.info(ratioWidth, ratioHeight); // webglPlayer.renderFrame(new Uint8Array(event.data), width, height, ylen, uvlen);
-
-    webglPlayer.renderFrame(ratioWidth, ratioHeight, new Uint8Array(event.data, 4));
+    this.player.setSizefunction(ratioWidth, ratioHeight, 1920);
+    this.player.renderFrame(ratioWidth, ratioHeight, new Uint8Array(data, 4));
   }
 
   getRatioNumber(barrayData, byteRange) {
@@ -756,59 +620,56 @@ class YUVPlayer extends React.Component {
   }
 
   startPalyer() {
-    this.setState({
-      PLAYER_STATE: 1
+    let canvas = ReactDOM.findDOMNode(this.refs['currentCanvas']);
+    this.player = new WebGLPlayer(canvas, {
+      preserveDrawingBuffer: false
     });
+    this.setPlayerState(1);
+    this.errorTimer = 0;
+    clearTimeout(this.reloadTimer);
   }
 
   _createScoket() {
     const _SOCKET_URL = this.SOCKET_URL;
     const _STREAM_URL = this.STREAM_URL;
+    const RATE = this.RATIO;
     let that = this;
 
     if (!WebSocketController.isSupported()) {
       return;
     }
 
-    if (this.websocket) {
-      this.websocket.destroy();
-      this.websocket = null;
-    }
-
+    this.closeWebSocket();
     this.websocket = new WebSocketController();
     this.websocket.onComplete = this._onComplete.bind(this);
     this.websocket.onError = this._onError.bind(this);
     this.websocket.onCommand = this._onCommand.bind(this); // 初始化成功后，开始发送拉流地址
 
     this.websocket.onOpen = function () {
-      this.websocket.send('{"commond":"url","url":"' + _STREAM_URL + '"}');
+      this.websocket.send('{"commond":"url","url":"' + _STREAM_URL + '", "rate":"' + RATE + '"}');
     }.bind(this); // 连接成功后，发送信令，开始视频拉流
 
 
     this.websocket.onSuccess = function (e) {
-      console.info(e);
-
       if (e.msg === 'succeed') {
         that.startPalyer();
-        this.RATIO && this.websocket.send(`{"commond":"modify", "url":"${this.RATIO}"}`);
         this.websocket.send('{"commond":"start"}');
       } else {
-        this.websocket.onError(e.msg);
+        this.websocket.onError(e);
       }
     }.bind(this);
 
     this.websocket.open(_SOCKET_URL);
   }
 
+  getDom() {
+    return ReactDOM.findDOMNode(this.refs['currentCanvas']);
+  }
+
   render() {
-    const {
-      PLAYER_STATE
-    } = this.state;
     return React.createElement("div", {
       class: "yuv-player-comp"
-    }, React.createElement(YUVMessage, {
-      playerState: PLAYER_STATE
-    }), React.createElement(ContrallerBar, null), React.createElement("div", {
+    }, React.createElement("div", {
       class: "row player-container"
     }, React.createElement("canvas", {
       class: "player-canvas-render",

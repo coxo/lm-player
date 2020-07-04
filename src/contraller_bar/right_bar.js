@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react'
-import IconFont from '../iconfont'
+import IconFont from '../simple/iconfont'
 import Bar from './bar'
-import { isFullscreen, fullScreenListener, computedBound } from '../util'
+import { isFullscreen, fullScreenListener, computedBound } from '../utils/util'
 import PropTypes from 'prop-types'
 
 function RightBar({ playContainer, api, scale, snapshot, rightExtContents, rightMidExtContents }) {

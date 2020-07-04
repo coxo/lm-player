@@ -40,9 +40,19 @@
         const historyInputRef = useRef(null);
         const [isLive, setIsLive] = useState(true);
         const [file, setFile] = useState(undefined);
+        const [screenNum, setScreenNum] = useState(4);
         const [playList, setPlayList] = useState(undefined);
         const [liveType, setLiveType] = useState("");
         const [historyType, setHistoryType] = useState("");
+        /**
+         * 此参与优先级高（不传递，默认使用localstorage的 VD_STM配置，全不传递时，默认使用0）
+         * 0：不用插件
+         * 1：h264不用插件，其它用插件
+         * 2：全用插件
+        */
+        const config = {
+          mode: 2
+        }
         return (
           <div style={{ width: "100%", padding: 20 }}>
             <div style={{ width: 800, margin: "0 auto 40px auto" }}>
@@ -102,8 +112,20 @@
                 >
                   播放
                 </button>
+                <button
+                  style={{ width: 60, height: 32 }}
+                  onClick={e => setFile('')}
+                >
+                  关闭
+                </button>
+                <button
+                  style={{ width: 60, height: 32 }}
+                  onClick={e => setScreenNum(9)}
+                >
+                  设置1分屏
+                </button>
               </div>
-              <Player type={liveType} file={file} isLive={isLive} />
+              <Player type={liveType} file={file} isLive={isLive} screenNum={screenNum} />
             </div>
             <div style={{ width: 800, margin: "0 auto 40px auto" }}>
               <h2 style={{ marginBottom: 10 }}>

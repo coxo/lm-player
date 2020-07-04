@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import IconFont from '../iconfont'
-import Slider from '../slider'
+import IconFont from '../simple/iconfont'
+import Slider from '../simple/slider'
 import Bar from './bar'
 import EventName from '../event/eventName'
 import PropTypes from 'prop-types'
 
-function LeftBar({ api, event, video, isHistory, reloadHistory, isLive, leftExtContents, leftMidExtContents }) {
+function LeftBar({ api, event, video, isHistory, reloadHistory, isLive, isVolume = false, leftExtContents, leftMidExtContents }) {
   const [openSliderVolume, setOpenSliderVolume] = useState(false)
   const [dep, setDep] = useState(Date.now())
   useEffect(() => {
@@ -22,6 +22,14 @@ function LeftBar({ api, event, video, isHistory, reloadHistory, isLive, leftExtC
       event.removeEventListener('volumechange', updateRender)
     }
   }, [event])
+
+  if(!video){
+    video = {
+      paused : false,
+      muted : 0,
+      volume:0
+    }
+  }
 
   //缓存值
   const paused = useMemo(() => video.paused, [dep, video])
@@ -56,7 +64,7 @@ function LeftBar({ api, event, video, isHistory, reloadHistory, isLive, leftExtC
       <Bar visibel={!isLive}>
         <IconFont onClick={changePlayStatus} type={statusIconClassName} title={statusText} />
       </Bar>
-      <Bar className={`contraller-bar-volume ${sliderClassName}`} onMouseOver={() => setOpenSliderVolume(true)} onMouseOut={() => setOpenSliderVolume(false)}>
+      <Bar visibel={isVolume} className={`contraller-bar-volume ${sliderClassName}`} onMouseOver={() => setOpenSliderVolume(true)} onMouseOut={() => setOpenSliderVolume(false)}>
         <IconFont onClick={mutedChantgeStatus} type={volumeIcon} title="音量" />
         <div className="volume-slider-layout">
           <Slider className="volume-slider" currentPercent={volumePercent} onChange={onChangeVolume} renderTips={precent => <span>{Math.round(precent * 100)}%</span>} tipsY={-2} />

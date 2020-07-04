@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import BrowserTab from './event/browserTabEvent'
+import BrowserTab from '../event/browserTabEvent'
 
 function LiveHeart({ api }) {
   useEffect(() => {

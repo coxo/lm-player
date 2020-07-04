@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import IconFont from './iconfont'
 import Slider from './slider'
 import { timeStamp } from './util'
-import './style/time-line.less'
+import '../style/time-line.less'
 
 function TineLine({ event, api, visibel }) {
   const [state, setState] = useState({ duration: 0, currentTime: 0, buffered: 0 })

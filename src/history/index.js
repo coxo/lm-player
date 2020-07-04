@@ -1,16 +1,16 @@
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react'
 import PropTypes from 'prop-types'
 import ContrallerBar from '../contraller_bar'
-import VideoMessage, { NoSource } from '../message'
+import VideoMessage, { NoSource } from '../utils/message'
 import HistoryTimeLine from './time_line_history'
 import ErrorEvent from '../event/errorEvent'
 import DragEvent from '../event/dragEvent'
-import Api from '../api'
+import Api from '../simple/api'
 import VideoEvent from '../event'
 import PlayEnd from './play_end'
 import EventName from '../event/eventName'
 import ContrallerEvent from '../event/contrallerEvent'
-import { getVideoType, createFlvPlayer, createHlsPlayer } from '../util'
+import { getVideoType, createFlvPlayer, createHlsPlayer } from '../utils/util'
 import { computedTimeAndIndex } from './utils'
 
 function HistoryPlayer({ type, historyList, defaultTime, className, autoPlay, muted, poster, playsinline, loop, preload, children, onInitPlayer, ...props }) {
@@ -54,19 +54,19 @@ function HistoryPlayer({ type, historyList, defaultTime, className, autoPlay, mu
   const changePlayIndex = useCallback(
     (index) => {
       if (index > historyList.fragments.length - 1) {
-        return playerObj.event && playerObj.event.emit(EventName.HISTORY_PLAY_END)
+        return playerObj && playerObj.event && playerObj.event.emit(EventName.HISTORY_PLAY_END)
       }
 
       if (!historyList.fragments[index].file) {
-        changePlayIndex(index + 1)
+        return changePlayIndex(index + 1)
       }
 
-      if (playerObj.event) {
+      if (playerObj && playerObj.event) {
         playerObj.event.emit(EventName.CHANGE_PLAY_INDEX, index)
       }
       setPlayStatus([index, 0])
     },
-    [playerObj]
+    [playerObj, historyList]
   )
 
   const reloadHistory = useCallback(() => {
@@ -77,6 +77,12 @@ function HistoryPlayer({ type, historyList, defaultTime, className, autoPlay, mu
 
     playerObj.event.emit(EventName.RELOAD)
   }, [playerObj])
+
+  useEffect(() => {
+    if (!file) {
+      changePlayIndex(playIndex + 1)
+    }
+  }, [file, playIndex, historyList])
 
   useEffect(() => {
     if (!file) {
@@ -170,7 +176,7 @@ function VideoTools({
   }
   return (
     <>
-      <VideoMessage api={playerObj.api} event={playerObj.event} isH265={false} />
+      <VideoMessage api={playerObj.api} event={playerObj.event} isPlus={false} />
       {draggable && <DragEvent playContainer={playerObj.playContainer} api={playerObj.api} event={playerObj.event} />}
       {!hideContrallerBar && (
         <ContrallerEvent event={playerObj.event} playContainer={playerObj.playContainer}>

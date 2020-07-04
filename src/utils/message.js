@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react'
-import IconFont from './iconfont'
-import EventName from './event/eventName'
-import './style/message.less'
+import IconFont from '../simple/iconfont'
+import EventName from '../event/eventName'
+import '../style/message.less'
 
-function VideoMessage({ event, api, isH265 }) {
+function VideoMessage({ event, api}) {
   const [state, setState] = useState({ status: null, errorTimer: null, loading: false })
 
   const message = useMemo(() => {
@@ -55,12 +55,52 @@ function VideoMessage({ event, api, isH265 }) {
   }, [event])
   
 
-  let { loading, status } = state
+  const { loading, status } = state
 
-  if(isH265){
-    loading = false;
-    status = null;
-  }
+
+  return (
+    <div className={`lm-player-message-mask ${loading || status === 'fail' ? 'lm-player-mask-loading-animation' : ''}`}>
+      <IconFont
+        type={status === 'fail' ? 'lm-player-YesorNo_No_Dark' : 'lm-player-Loading'}
+        className={`${loading && status !== 'fail' ? 'lm-player-loading-animation' : status === 'fail' ? 'lm-player-loadfail' : ''} lm-player-loading-icon`}
+      />
+      <span className="lm-player-message">{message}</span>
+    </div>
+  )
+}
+
+
+export const YUVMessage = ({ event, api, playerState}) => {
+  const [state, setState] = useState({ status: null, errorTimer: null, loading: false })
+
+  const message = useMemo(() => {
+    if (!state.status) {
+      return ''
+    }
+    if (state.status === 'fail') {
+      return '视频错误'
+    }
+    if (state.status === 'reload') {
+      return `视频加载错误，正在进行重连第${state.errorTimer}重连`
+    }
+  }, [state.errorTimer, state.status])
+
+  useEffect(() => {
+    if(playerState == 0){
+      setState({ status: null, errorTimer: null, loading: true })
+    }else if(playerState == 1){
+      setState({ status: null, errorTimer: null, loading: false })
+    }else if(playerState == 3){
+      setState({ status: 'fail', errorTimer: null, loading: false })
+    }else if(playerState == 4){
+      setState({ status: null, errorTimer: null, loading: false })
+    }
+
+  },[playerState])
+  
+
+  const { loading, status } = state
+
 
   return (
     <div className={`lm-player-message-mask ${loading || status === 'fail' ? 'lm-player-mask-loading-animation' : ''}`}>
@@ -82,3 +122,5 @@ export const NoSource = () => {
 }
 
 export default VideoMessage
+
+

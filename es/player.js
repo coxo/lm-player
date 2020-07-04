@@ -154,32 +154,6 @@ function getVideoType(url) {
   return suffix;
 }
 /**
- * 播放时间转字符串
- * @param {*} second_time
- */
-
-function timeStamp(second_time) {
-  let time = Math.ceil(second_time);
-
-  if (time > 60) {
-    let second = Math.ceil(second_time % 60);
-    let min = Math.floor(second_time / 60);
-    time = `${min < 10 ? `0${min}` : min}:${second < 10 ? `0${second}` : second}`;
-
-    if (min > 60) {
-      min = Math.ceil(second_time / 60 % 60);
-      let hour = Math.floor(second_time / 60 / 60);
-      time = `${hour < 10 ? `0${hour}` : hour}:${min < 10 ? `0${min}` : min}:${second < 10 ? `0${second}` : second}`;
-    } else {
-      time = `00:${time}`;
-    }
-  } else {
-    time = `00:00:${time < 10 ? `0${time}` : time}`;
-  }
-
-  return time;
-}
-/**
  * 日期格式化
  * @param {*} timetemp
  */
@@ -633,6 +607,7 @@ function LeftBar({
   isHistory,
   reloadHistory,
   isLive,
+  isVolume = false,
   leftExtContents,
   leftMidExtContents
 }) {
@@ -651,7 +626,16 @@ function LeftBar({
       event.removeEventListener('pause', updateRender);
       event.removeEventListener('volumechange', updateRender);
     };
-  }, [event]); //缓存值
+  }, [event]);
+
+  if (!video) {
+    video = {
+      paused: false,
+      muted: 0,
+      volume: 0
+    };
+  } //缓存值
+
 
   const paused = useMemo(() => video.paused, [dep, video]);
   const statusIconClassName = useMemo(() => paused ? 'lm-player-Play_Main' : 'lm-player-Pause_Main', [paused]);
@@ -680,6 +664,7 @@ function LeftBar({
     type: statusIconClassName,
     title: statusText
   })), /*#__PURE__*/React.createElement(Bar, {
+    visibel: isVolume,
     className: `contraller-bar-volume ${sliderClassName}`,
     onMouseOver: () => setOpenSliderVolume(true),
     onMouseOut: () => setOpenSliderVolume(false)
@@ -819,7 +804,8 @@ function ContrallerBar({
   reloadHistory,
   isLive,
   leftExtContents,
-  leftMidExtContents
+  leftMidExtContents,
+  isPlus
 }) {
   return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     className: `contraller-bar-layout ${!visibel ? 'hide-contraller-bar' : ''}`
@@ -831,7 +817,8 @@ function ContrallerBar({
     reloadHistory: reloadHistory,
     isLive: isLive,
     leftMidExtContents: leftMidExtContents,
-    leftExtContents: leftExtContents
+    leftExtContents: leftExtContents,
+    isPlus: isPlus
   }), /*#__PURE__*/React.createElement(RightBar, {
     api: api,
     event: event,
@@ -884,8 +871,7 @@ function ContrallerEvent({
 
 function VideoMessage({
   event,
-  api,
-  isH265
+  api
 }) {
   const [state, setState] = useState({
     status: null,
@@ -962,16 +948,10 @@ function VideoMessage({
       event.off(EventName.CLEAR_ERROR_TIMER, reloadSuccess);
     };
   }, [event]);
-  let {
+  const {
     loading,
     status
   } = state;
-
-  if (isH265) {
-    loading = false;
-    status = null;
-  }
-
   return /*#__PURE__*/React.createElement("div", {
     className: `lm-player-message-mask ${loading || status === 'fail' ? 'lm-player-mask-loading-animation' : ''}`
   }, /*#__PURE__*/React.createElement(IconFont, {
@@ -982,6 +962,69 @@ function VideoMessage({
   }, message));
 }
 
+const YUVMessage = ({
+  event,
+  api,
+  playerState
+}) => {
+  const [state, setState] = useState({
+    status: null,
+    errorTimer: null,
+    loading: false
+  });
+  const message = useMemo(() => {
+    if (!state.status) {
+      return '';
+    }
+
+    if (state.status === 'fail') {
+      return '视频错误';
+    }
+
+    if (state.status === 'reload') {
+      return `视频加载错误，正在进行重连第${state.errorTimer}重连`;
+    }
+  }, [state.errorTimer, state.status]);
+  useEffect(() => {
+    if (playerState == 0) {
+      setState({
+        status: null,
+        errorTimer: null,
+        loading: true
+      });
+    } else if (playerState == 1) {
+      setState({
+        status: null,
+        errorTimer: null,
+        loading: false
+      });
+    } else if (playerState == 3) {
+      setState({
+        status: 'fail',
+        errorTimer: null,
+        loading: false
+      });
+    } else if (playerState == 4) {
+      setState({
+        status: null,
+        errorTimer: null,
+        loading: false
+      });
+    }
+  }, [playerState]);
+  const {
+    loading,
+    status
+  } = state;
+  return /*#__PURE__*/React.createElement("div", {
+    className: `lm-player-message-mask ${loading || status === 'fail' ? 'lm-player-mask-loading-animation' : ''}`
+  }, /*#__PURE__*/React.createElement(IconFont, {
+    type: status === 'fail' ? 'lm-player-YesorNo_No_Dark' : 'lm-player-Loading',
+    className: `${loading && status !== 'fail' ? 'lm-player-loading-animation' : status === 'fail' ? 'lm-player-loadfail' : ''} lm-player-loading-icon`
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "lm-player-message"
+  }, message));
+};
 const NoSource = () => {
   return /*#__PURE__*/React.createElement("div", {
     className: "lm-player-message-mask lm-player-mask-loading-animation"
@@ -993,6 +1036,77 @@ const NoSource = () => {
     title: "\u8BF7\u9009\u62E9\u89C6\u9891\u6E90"
   }));
 };
+
+/**
+ * 播放时间转字符串
+ * @param {*} second_time
+ */
+
+function timeStamp(second_time) {
+  let time = Math.ceil(second_time);
+
+  if (time > 60) {
+    let second = Math.ceil(second_time % 60);
+    let min = Math.floor(second_time / 60);
+    time = `${min < 10 ? `0${min}` : min}:${second < 10 ? `0${second}` : second}`;
+
+    if (min > 60) {
+      min = Math.ceil(second_time / 60 % 60);
+      let hour = Math.floor(second_time / 60 / 60);
+      time = `${hour < 10 ? `0${hour}` : hour}:${min < 10 ? `0${min}` : min}:${second < 10 ? `0${second}` : second}`;
+    } else {
+      time = `00:${time}`;
+    }
+  } else {
+    time = `00:00:${time < 10 ? `0${time}` : time}`;
+  }
+
+  return time;
+}
+/**
+ * 全屏
+ * @param {*} element
+ */
+
+function fullscreen$1(element) {
+  if (element.requestFullScreen) {
+    element.requestFullScreen();
+  } else if (element.webkitRequestFullScreen) {
+    element.webkitRequestFullScreen();
+  } else if (element.mozRequestFullScreen) {
+    element.mozRequestFullScreen();
+  } else if (element.msRequestFullscreen) {
+    element.msRequestFullscreen();
+  }
+}
+/**
+ * exitFullscreen 退出全屏
+ * @param  {Objct} element 选择器
+ */
+
+function exitFullscreen$1() {
+  if (document.exitFullscreen) {
+    document.exitFullscreen();
+  } else if (document.mozCancelFullScreen) {
+    document.mozCancelFullScreen();
+  } else if (document.webkitExitFullscreen) {
+    document.webkitExitFullscreen();
+  } else if (document.msExitFullscreen) {
+    document.msExitFullscreen();
+  }
+}
+/**
+ * [isFullscreen 判断浏览器是否全屏]
+ * @return [全屏则返回当前调用全屏的元素,不全屏返回false]
+ */
+
+function isFullscreen$1(ele) {
+  if (!ele) {
+    return false;
+  }
+
+  return document.fullscreenElement === ele || document.msFullscreenElement === ele || document.mozFullScreenElement === ele || document.webkitFullscreenElement === ele || false;
+} // 添加 / 移除 全屏事件监听
 
 function TineLine({
   event,
@@ -1092,6 +1206,13 @@ function ErrorEvent({
   useEffect(() => {
     const errorHandle = (...args) => {
       console.error(...args);
+
+      if (args && args.length > 2 && args[2].code == 11) {
+        api.unload();
+        api.load();
+        return;
+      }
+
       errorInfo.current = args;
       setErrorTime(errorTimer + 1);
     };
@@ -1170,7 +1291,7 @@ class DragEvent extends React.Component {
     this.openDrag = e => {
       this.position.start = [e.pageX, e.pageY];
       this.dragDom.addEventListener('mousemove', this.moveChange);
-      this.dragDom.addEventListener('mouseup', this.stopDrag);
+      document.body.addEventListener('mouseup', this.stopDrag);
     };
 
     this.moveChange = e => {
@@ -1188,7 +1309,7 @@ class DragEvent extends React.Component {
 
     this.stopDrag = () => {
       this.dragDom.removeEventListener('mousemove', this.moveChange);
-      this.dragDom.removeEventListener('mouseup', this.stopDrag);
+      document.body.removeEventListener('mouseup', this.stopDrag);
       this.transformChange();
     };
 
@@ -1238,7 +1359,8 @@ class Api {
     playContainer,
     event,
     flv,
-    hls
+    hls,
+    isPlus
   }) {
     this.player = video;
     this.playContainer = playContainer;
@@ -1247,6 +1369,7 @@ class Api {
     this.event = event;
     this.scale = 1;
     this.position = [0, 0];
+    this.isPlus = isPlus;
   }
   /**
    * 播放器销毁后 动态跟新api下的flv，hls对象
@@ -1267,8 +1390,8 @@ class Api {
 
 
   requestFullScreen() {
-    if (!isFullscreen(this.playContainer)) {
-      fullscreen(this.playContainer);
+    if (!isFullscreen$1(this.playContainer)) {
+      fullscreen$1(this.playContainer);
     }
   }
   /**
@@ -1277,8 +1400,8 @@ class Api {
 
 
   cancelFullScreen() {
-    if (isFullscreen(this.playContainer)) {
-      exitFullscreen();
+    if (isFullscreen$1(this.playContainer)) {
+      exitFullscreen$1();
     }
   }
 
@@ -1580,6 +1703,316 @@ class Api {
 
 }
 
+class YUVApi {
+  constructor({
+    player,
+    playContainer,
+    event,
+    flv,
+    hls
+  }) {
+    this.player = player;
+    this.playContainer = playContainer;
+    this.flv = flv;
+    this.hls = hls;
+    this.event = event;
+    this.scale = 1;
+    this.position = [0, 0];
+  }
+  /**
+   * 播放器销毁后 动态跟新api下的flv，hls对象
+   * @param {*} param0
+   */
+
+
+  updateChunk({
+    flv,
+    hls
+  }) {
+    this.flv = flv;
+    this.hls = hls;
+  }
+  /**
+   * 全屏
+   */
+
+
+  requestFullScreen() {
+    if (!isFullscreen(this.playContainer)) {
+      fullscreen(this.playContainer);
+    }
+  }
+  /**
+   * 退出全屏
+   */
+
+
+  cancelFullScreen() {
+    if (isFullscreen(this.playContainer)) {
+      exitFullscreen();
+    }
+  }
+
+  play() {
+    if (this.player.paused) {
+      this.player.play();
+    }
+  }
+
+  pause() {
+    if (!this.player.paused) {
+      this.player.pause();
+    }
+  }
+
+  destroy() {
+    this.player.removeAttribute('src');
+    this.unload();
+
+    if (this.flv) {
+      this.flv.destroy();
+    }
+
+    if (this.hls) {
+      this.hls.destroy();
+    }
+  }
+  /**
+   * 设置currentTime实现seek
+   * @param {*} seconds
+   * @param {*} noEmit
+   */
+
+
+  seekTo(seconds, noEmit) {
+    const buffered = this.getBufferedTime();
+
+    if (this.flv && buffered[0] > seconds) {
+      this.flv.unload();
+      this.flv.load();
+    } // this.player.currentTime = seconds
+
+
+    if (!noEmit) {
+      this.event.emit(EventName.SEEK, seconds);
+    }
+  }
+  /**
+   * 视频重载
+   */
+
+
+  reload(notEmit) {
+    if (this.getCurrentTime !== 0) {
+      this.seekTo(0);
+    }
+
+    if (this.hls) {
+      this.hls.swapAudioCodec();
+      this.hls.recoverMediaError();
+    }
+
+    this.unload();
+    this.load();
+    !notEmit && this.event.emit(EventName.RELOAD);
+  }
+
+  unload() {
+    this.flv && this.flv.unload();
+    this.hls && this.hls.stopLoad();
+  }
+
+  load() {
+    if (this.flv) {
+      this.flv.load();
+    }
+
+    if (this.hls) {
+      this.hls.startLoad();
+      this.hls.loadSource(this.hls.url);
+    }
+  }
+
+  setVolume(fraction) {
+    this.player.volume = fraction;
+  }
+
+  mute() {// this.player.muted = true
+  }
+
+  unmute() {} // this.player.muted = false
+
+  /**
+   * 开启画中画功能
+   */
+
+
+  requestPictureInPicture() {
+    if (this.player.requestPictureInPicture && document.pictureInPictureElement !== this.player) {
+      this.player.requestPictureInPicture();
+    }
+  }
+  /**
+   * 关闭画中画功能
+   */
+
+
+  exitPictureInPicture() {
+    if (document.exitPictureInPicture && document.pictureInPictureElement === this.player) {
+      document.exitPictureInPicture();
+    }
+  }
+  /**
+   * 设置播放速率
+   * @param {*} rate
+   */
+
+
+  setPlaybackRate(rate) {
+    this.player.playbackRate = rate;
+  }
+  /**
+   * 获取视频总时长
+   */
+
+
+  getDuration() {
+    if (!this.player) return null;
+    const {
+      duration,
+      seekable
+    } = this.player;
+
+    if (duration === Infinity && seekable.length > 0) {
+      return seekable.end(seekable.length - 1);
+    }
+
+    return duration;
+  }
+  /**
+   * 获取当前播放时间
+   */
+
+
+  getCurrentTime() {
+    if (!this.player) return null;
+    return this.player.currentTime;
+  }
+  /**
+   * 获取缓存时间
+   */
+
+
+  getSecondsLoaded() {
+    return this.getBufferedTime()[1];
+  }
+  /**
+   * 获取当前视频缓存的起止时间
+   */
+
+
+  getBufferedTime() {
+    if (!this.player) return null;
+    const {
+      buffered
+    } = this.player;
+
+    if (!buffered || buffered.length === 0) {
+      return [0, 0];
+    }
+
+    const end = buffered.end(buffered.length - 1);
+    const start = buffered.start(buffered.length - 1);
+    const duration = this.getDuration();
+
+    if (end > duration) {
+      return duration;
+    }
+
+    return [start, end];
+  }
+  /**
+   * 快进通过seekTo方法实现
+   * @param {*} second
+   */
+
+
+  fastForward(second = 5) {
+    const duration = this.getDuration();
+    const currentTime = this.getCurrentTime();
+    const time = currentTime + second;
+    this.seekTo(time > duration - 1 ? duration - 1 : time);
+  }
+  /**
+   * 快退通过seekTo方法实现
+   * @param {*} second
+   */
+
+
+  backWind(second = 5) {
+    const currentTime = this.getCurrentTime();
+    const time = currentTime - second;
+    this.seekTo(time < 1 ? 1 : time);
+  }
+  /**
+   * 视频截屏方法
+   */
+
+
+  snapshot() {
+    return this.player && this.player.getDom().toDataURL();
+  }
+
+  setScale(num, isRest = false) {
+    console.info('正在开发中...');
+  }
+
+  getScale() {
+    return this.scale;
+  }
+
+  setPosition(position, isAnimate) {
+    console.info('正在开发中...');
+  }
+
+  getPosition() {
+    return this.position;
+  }
+
+  __setTransform() {
+    this.player && (this.player.style.transform = `scale(${this.scale}) translate(${this.position[0]}px,${this.position[1]}px)`);
+  }
+
+  getApi() {
+    return {
+      play: this.play.bind(this),
+      reload: this.reload.bind(this),
+      pause: this.pause.bind(this),
+      seekTo: this.seekTo.bind(this),
+      setVolume: this.setVolume.bind(this),
+      mute: this.mute.bind(this),
+      unmute: this.unmute.bind(this),
+      requestPictureInPicture: this.requestPictureInPicture.bind(this),
+      exitPictureInPicture: this.exitPictureInPicture.bind(this),
+      setPlaybackRate: this.setPlaybackRate.bind(this),
+      destroy: this.destroy.bind(this),
+      getDuration: this.getDuration.bind(this),
+      getCurrentTime: this.getCurrentTime.bind(this),
+      getSecondsLoaded: this.getSecondsLoaded.bind(this),
+      getBufferedTime: this.getBufferedTime.bind(this),
+      fastForward: this.fastForward.bind(this),
+      backWind: this.backWind.bind(this),
+      snapshot: this.snapshot.bind(this),
+      requestFullScreen: this.requestFullScreen.bind(this),
+      cancelFullScreen: this.cancelFullScreen.bind(this),
+      __player: this.player,
+      flv: this.flv,
+      hls: this.hls
+    };
+  }
+
+}
+
 function getHiddenProp() {
   const prefixes = ["webkit", "moz", "ms", "o"]; // 如果hidden 属性是原生支持的，我们就直接返回
 
@@ -1735,6 +2168,7 @@ class WebSocketController {
     this._onCommand = null;
     this._onSuccess = null;
     this._onOpen = null;
+    console.log('close webscoket!');
   }
 
   isWorking() {
@@ -1959,6 +2393,8 @@ class WebGLPlayer {
 
     let vertexShaderSource = `
         attribute lowp vec4 a_vertexPosition;
+        uniform float px;
+        uniform float py;
         attribute vec2 a_texturePosition;
         varying vec2 v_texCoord;
         void main() {
@@ -2117,14 +2553,17 @@ class WebGLPlayer {
     gl.clearColor(0, 0, 0, 0); // 清空缓冲 颜色缓冲区（COLOR_BUFFER_BIT）
 
     gl.clear(gl.COLOR_BUFFER_BIT);
-    let uOffset = width * height;
+    let uOffset = width * height; // 四分之一的长乘宽 获取U
+
     let vOffset = (width >> 1) * (height >> 1);
-    gl.bindTexture(gl.TEXTURE_2D, gl.y); // 填充纹理
+    gl.bindTexture(gl.TEXTURE_2D, gl.y); // 填充Y纹理,Y 的宽度和高度就是 width，和 height，存储的位置就是data.subarray(0, width * height)
 
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, width, height, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, data.subarray(0, uOffset));
-    gl.bindTexture(gl.TEXTURE_2D, gl.u);
+    gl.bindTexture(gl.TEXTURE_2D, gl.u); // 填充U纹理,Y 的宽度和高度就是 width/2 和 height/2，存储的位置就是data.subarray(width * height, width/2 * height/2 + width * height)
+
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, width >> 1, height >> 1, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, data.subarray(uOffset, uOffset + vOffset));
-    gl.bindTexture(gl.TEXTURE_2D, gl.v);
+    gl.bindTexture(gl.TEXTURE_2D, gl.v); // 填充U纹理,Y 的宽度和高度就是 width/2 和 height/2，存储的位置就是data.subarray(width/2 * height/2 + width * height, data.length)
+
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, width >> 1, height >> 1, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, data.subarray(uOffset + vOffset, data.length));
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
@@ -2152,212 +2591,12 @@ class WebGLPlayer {
 
 }
 
-function _extends$1() {
-  _extends$1 = Object.assign || function (target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i];
-
-      for (var key in source) {
-        if (Object.prototype.hasOwnProperty.call(source, key)) {
-          target[key] = source[key];
-        }
-      }
-    }
-
-    return target;
-  };
-
-  return _extends$1.apply(this, arguments);
-}
-
-function IconFont$1({
-  type,
-  className = '',
-  ...props
-}) {
-  return /*#__PURE__*/React.createElement("i", _extends$1({
-    className: `yuv-player-iconfont ${type} ${className}`
-  }, props));
-}
-
-IconFont$1.propTypes = {
-  type: PropTypes.string,
-  className: PropTypes.string
-};
-
-const NoSource$1 = () => {
-  return /*#__PURE__*/React.createElement("div", {
-    className: "yuv-player-message-mask yuv-player-mask-loading-animation"
-  }, /*#__PURE__*/React.createElement(IconFont$1, {
-    style: {
-      fontSize: 80
-    },
-    type: "yuv-player-PlaySource",
-    title: "\u8BF7\u9009\u62E9\u89C6\u9891\u6E90"
-  }));
-};
-
-function ContentSource({
-  status
-}) {
-  const {
-    msg = '',
-    loading = true
-  } = useMemo(() => {
-    if (status == 1) {
-      return {
-        msg: '',
-        loading: false
-      };
-    }
-
-    if (status === 2) {
-      return {
-        msg: '视频错误',
-        loading: false
-      };
-    }
-
-    if (status === 3) {
-      return {
-        msg: '视频加载错误，正在进行重连...',
-        loading: true
-      };
-    }
-  }, [status]);
-  console.info(loading, status);
-  return /*#__PURE__*/React.createElement("div", {
-    className: `yuv-player-message-mask ${loading || status === 2 ? 'yuv-player-mask-loading-animation' : ''}`
-  }, /*#__PURE__*/React.createElement(IconFont$1, {
-    type: status === 2 ? 'yuv-player-YesorNo_No_Dark' : 'yuv-player-Loading',
-    className: `${loading && status !== 2 ? 'yuv-player-loading-animation' : status === 2 ? 'yuv-player-loadfail' : ''} yuv-player-loading-icon`
-  }), /*#__PURE__*/React.createElement("span", {
-    className: "yuv-player-message"
-  }, msg));
-}
-
-function YUVMessage({
-  playerState
-}) {
-  console.info('当前播放状态为：==>', playerState);
-
-  if (playerState == 0) {
-    return /*#__PURE__*/React.createElement(NoSource$1, null);
-  } else {
-    return /*#__PURE__*/React.createElement(ContentSource, {
-      status: playerState
-    });
-  }
-}
-
-function Bar$1({
-  visibel = true,
-  className = '',
-  children,
-  ...props
-}) {
-  if (visibel === false) {
-    return null;
-  }
-
-  return /*#__PURE__*/React.createElement("span", _extends$1({
-    className: `contraller-bar-item ${className}`
-  }, props), children);
-}
-
-Bar$1.propTypes = {
-  visibel: PropTypes.bool,
-  className: PropTypes.string,
-  children: PropTypes.any
-};
-
-function PlayerBar({
-  playContainer,
-  api,
-  scale,
-  snapshot,
-  rightExtContents,
-  rightMidExtContents
-}) {
-  const [dep, setDep] = useState(Date.now()); // useEffect(() => {
-
-  const fullscreen = useCallback(() => {
-    // !isFullscreen(playContainer) ? api.requestFullScreen() : api.cancelFullScreen()
-    setDep(Date.now());
-  }, [api, playContainer]);
-  const setScale = useCallback((...args) => {// const dragDom = playContainer.querySelector('.player-mask-layout')
-    // api.setScale(...args)
-    // let position = computedBound(dragDom, api.getPosition(), api.getScale())
-    // if (position) {
-    //   api.setPosition(position, true)
-    // }
-  }, [api, playContainer]);
-  return /*#__PURE__*/React.createElement("div", {
-    className: "contraller-right-bar"
-  }, rightMidExtContents, scale && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Bar$1, null, /*#__PURE__*/React.createElement(IconFont$1, {
-    title: "\u7F29\u5C0F",
-    onClick: () => setScale(-0.2),
-    type: 'yuv-player-ZoomOut_Main'
-  })), /*#__PURE__*/React.createElement(Bar$1, null, /*#__PURE__*/React.createElement(IconFont$1, {
-    title: "\u590D\u4F4D",
-    onClick: () => setScale(1, true),
-    type: 'yuv-player-ZoomDefault_Main'
-  })), /*#__PURE__*/React.createElement(Bar$1, null, /*#__PURE__*/React.createElement(IconFont$1, {
-    title: "\u653E\u5927",
-    onClick: () => setScale(0.2),
-    type: 'yuv-player-ZoomIn_Main'
-  }))), snapshot && /*#__PURE__*/React.createElement(Bar$1, null, /*#__PURE__*/React.createElement(IconFont$1, {
-    title: "\u622A\u56FE",
-    onClick: () => snapshot(api.snapshot()),
-    type: "yuv-player-SearchBox"
-  })), /*#__PURE__*/React.createElement(Bar$1, null, /*#__PURE__*/React.createElement(IconFont$1, {
-    title: '全屏',
-    onClick: fullscreen,
-    type: 'yuv-player-Full_Main'
-  })), rightExtContents);
-}
-
-PlayerBar.propTypes = {
-  api: PropTypes.object,
-  event: PropTypes.object,
-  playerProps: PropTypes.object,
-  playContainer: PropTypes.node,
-  reloadHistory: PropTypes.func,
-  isHistory: PropTypes.bool
-};
-
-function ContrallerBar$1({
-  playContainer,
-  snapshot,
-  rightExtContents,
-  rightMidExtContents,
-  scale,
-  visibel,
-  api,
-  event,
-  video,
-  isHistory,
-  reloadHistory,
-  isLive,
-  leftExtContents,
-  leftMidExtContents
-}) {
-  return /*#__PURE__*/React.createElement("div", {
-    className: `contraller-bar-layout ${!visibel ? 'hide-contraller-bar' : ''}`
-  }, /*#__PURE__*/React.createElement(PlayerBar, {
-    snapshot: "true"
-  }));
-}
-
-ContrallerBar$1.propTypes = {
-  visibel: PropTypes.bool
-};
-
 class YUVPlayer extends React.Component {
   constructor(props) {
     super(props);
     this.currentCanvas = /*#__PURE__*/React.createRef();
     this.websocket = null;
+    this.player = null;
     this.SOCKET_URL = 'ws://localhost:15080/transcoding';
     const {
       streamUrl,
@@ -2365,19 +2604,35 @@ class YUVPlayer extends React.Component {
     } = this.props;
     this.STREAM_URL = streamUrl;
     this.RATIO = ratio;
-    this.state = {
-      PLAYER_STATE: 0
-    };
+    this.errorTimer = 0;
+    this.reloadTimer = null;
+    this.errorFlag = 1;
+    this.setPlayerState(0);
+  }
+
+  setPlayerState(state) {
+    this.props.onPlayerState(state);
   }
 
   componentWillReceiveProps(nextProps) {
+    if (this.props.streamUrl !== nextProps.streamUrl) {
+      this.closeWebSocket();
+      this.STREAM_URL = nextProps.streamUrl;
+      this.openPlayer();
+    }
+
     if (this.props.ratio !== nextProps.ratio) {
       this.RATIO = nextProps.ratio;
-      this.RATIO && this.websocket.send(`{"commond":"modify", "url":"${this.RATIO}"}`);
+      this.RATIO && this.websocket && this.websocket.send(`{"commond":"modify", "url":"${this.RATIO}"}`);
     }
   }
 
-  componentDidMount() {
+  componentWillUnmount() {
+    this.closeWebSocket();
+    clearTimeout(this.reloadTimer);
+  }
+
+  openPlayer() {
     if (!this.STREAM_URL) {
       console.log('拉流地址为空！请检查配置');
       return;
@@ -2386,27 +2641,68 @@ class YUVPlayer extends React.Component {
     this._createScoket();
   }
 
-  _onComplete(e) {
-    console.info('_onComplete==>', e);
+  closeWebSocket() {
+    if (this.websocket) {
+      this.setPlayerState(4);
+      this.websocket.destroy();
+      this.websocket = null;
+    }
+
+    this.player && this.player.destroyfunction();
+  }
+
+  _onComplete(e) {// console.info('_onComplete==>', e)
   }
 
   _onError(e) {
     this.websocket = null;
+    this.setPlayerState(3);
+    this.errorTimer = this.errorTimer + 1;
+    const that = this;
     console.error(e);
+
+    if (this.errorTimer < 4 && errorFlag == 1) {
+      this.reloadTimer = setTimeout(() => {
+        console.warn(`视频播放出错，正在进行重连${that.errorTimer}`);
+
+        that._createScoket();
+      }, 2 * 1000);
+    }
+
+    if (e.code == 710047) {
+      this.errorFlag = 0;
+    }
   }
 
   _onCommand() {
-    // console.info('接收视频帧数据：',event);
     let bufferData = new Uint8Array(event.data);
     let ratioWidth = this.getRatioNumber(bufferData, [0, 2]);
     let ratioHeight = this.getRatioNumber(bufferData, [2, 4]);
     let canvas = ReactDOM.findDOMNode(this.refs['currentCanvas']);
-    let webglPlayer = new WebGLPlayer(canvas, {
+    this.loadYuv(canvas, ratioWidth, ratioHeight, event.data); // this.loadRGB(canvas,ratioWidth,ratioHeight,bufferData)
+  }
+
+  loadRGB(canvas, ratioWidth, ratioHeight, data) {
+    var canvasContext = canvas.getContext("2d");
+    var imgdata = canvasContext.createImageData(ratioHeight, ratioWidth);
+    var imgdatalen = imgdata.data.length;
+
+    for (var i = 0; i < imgdatalen; i += 4) {
+      imgdata.data[i + 0] = 0;
+      imgdata.data[i + 1] = 255;
+      imgdata.data[i + 2] = 0;
+      imgdata.data[i + 3] = 255;
+    }
+
+    canvasContext.putImageData(imgdata, 0, 0);
+  }
+
+  loadYuv(canvas, ratioWidth, ratioHeight, data) {
+    this.player = new WebGLPlayer(canvas, {
       preserveDrawingBuffer: false
     });
-    webglPlayer.setSizefunction(ratioWidth, ratioHeight, 1920); // console.info(ratioWidth, ratioHeight); // webglPlayer.renderFrame(new Uint8Array(event.data), width, height, ylen, uvlen);
-
-    webglPlayer.renderFrame(ratioWidth, ratioHeight, new Uint8Array(event.data, 4));
+    this.player.setSizefunction(ratioWidth, ratioHeight, 1920);
+    this.player.renderFrame(ratioWidth, ratioHeight, new Uint8Array(data, 4));
   }
 
   getRatioNumber(barrayData, byteRange) {
@@ -2418,59 +2714,56 @@ class YUVPlayer extends React.Component {
   }
 
   startPalyer() {
-    this.setState({
-      PLAYER_STATE: 1
+    let canvas = ReactDOM.findDOMNode(this.refs['currentCanvas']);
+    this.player = new WebGLPlayer(canvas, {
+      preserveDrawingBuffer: false
     });
+    this.setPlayerState(1);
+    this.errorTimer = 0;
+    clearTimeout(this.reloadTimer);
   }
 
   _createScoket() {
     const _SOCKET_URL = this.SOCKET_URL;
     const _STREAM_URL = this.STREAM_URL;
+    const RATE = this.RATIO;
     let that = this;
 
     if (!WebSocketController.isSupported()) {
       return;
     }
 
-    if (this.websocket) {
-      this.websocket.destroy();
-      this.websocket = null;
-    }
-
+    this.closeWebSocket();
     this.websocket = new WebSocketController();
     this.websocket.onComplete = this._onComplete.bind(this);
     this.websocket.onError = this._onError.bind(this);
     this.websocket.onCommand = this._onCommand.bind(this); // 初始化成功后，开始发送拉流地址
 
     this.websocket.onOpen = function () {
-      this.websocket.send('{"commond":"url","url":"' + _STREAM_URL + '"}');
+      this.websocket.send('{"commond":"url","url":"' + _STREAM_URL + '", "rate":"' + RATE + '"}');
     }.bind(this); // 连接成功后，发送信令，开始视频拉流
 
 
     this.websocket.onSuccess = function (e) {
-      console.info(e);
-
       if (e.msg === 'succeed') {
         that.startPalyer();
-        this.RATIO && this.websocket.send(`{"commond":"modify", "url":"${this.RATIO}"}`);
         this.websocket.send('{"commond":"start"}');
       } else {
-        this.websocket.onError(e.msg);
+        this.websocket.onError(e);
       }
     }.bind(this);
 
     this.websocket.open(_SOCKET_URL);
   }
 
+  getDom() {
+    return ReactDOM.findDOMNode(this.refs['currentCanvas']);
+  }
+
   render() {
-    const {
-      PLAYER_STATE
-    } = this.state;
     return /*#__PURE__*/React.createElement("div", {
       class: "yuv-player-comp"
-    }, /*#__PURE__*/React.createElement(YUVMessage, {
-      playerState: PLAYER_STATE
-    }), /*#__PURE__*/React.createElement(ContrallerBar$1, null), /*#__PURE__*/React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       class: "row player-container"
     }, /*#__PURE__*/React.createElement("canvas", {
       class: "player-canvas-render",
@@ -2479,6 +2772,41 @@ class YUVPlayer extends React.Component {
   }
 
 }
+
+function SimplePlayer({
+  autoPlay,
+  muted,
+  poster,
+  playsinline,
+  loop,
+  preload
+}) {
+  return /*#__PURE__*/React.createElement("video", {
+    autoPlay: autoPlay,
+    preload: preload,
+    muted: muted,
+    poster: poster,
+    controls: false,
+    playsInline: playsinline,
+    loop: loop
+  });
+}
+
+SimplePlayer.propTypes = {
+  muted: PropTypes.string,
+  autoPlay: PropTypes.bool,
+  playsInline: PropTypes.bool,
+  preload: PropTypes.string,
+  poster: PropTypes.string,
+  loop: PropTypes.bool
+};
+SimplePlayer.defaultProps = {
+  muted: 'muted',
+  autoPlay: true,
+  playsInline: false,
+  preload: 'auto',
+  loop: false
+};
 
 function SinglePlayer({
   type,
@@ -2492,36 +2820,34 @@ function SinglePlayer({
   preload,
   children,
   onInitPlayer,
+  screenNum,
+  config,
   ...props
 }) {
   const playContainerRef = useRef(null);
+  const YUVRef = useRef(null);
   const [playerObj, setPlayerObj] = useState(null);
-  const [isH265, setH265] = useState(false);
-  const DEMUX_MSG_EVENT = 'demux_msg';
-  useEffect(() => {
-    if (!file) {
-      return;
-    }
+  const [playerState, setPlayerState] = useState(0);
+  const rate = useMemo(() => getRate(screenNum), [screenNum]);
+  const DEMUX_MSG_EVENT = 'demux_msg'; // 播放运行模式
+  // 0：不用插件
+  // 1：h264不用插件，其它用插件
+  // 2：全用插件
 
-    const playerObject = {
-      playContainer: playContainerRef.current,
-      video: playContainerRef.current.querySelector('video')
-    };
+  const VD_RUN_STATE = config && config.mode || Number(localStorage.getItem('VD_RUN_STATE') || 0); // 是否插件播放
+
+  const [isPlus, setPlus] = useState(VD_RUN_STATE === 2 ? true : false);
+  const [yuvUrl, setYuvUrl] = useState(null);
+
+  function loadBrowserPlayer(playerObject, callback) {
     const formartType = getVideoType(file);
 
     if (formartType === 'flv' || type === 'flv') {
       playerObject.flv = createFlvPlayer(playerObject.video, { ...props,
         file
       });
-      playerObject.flv.on(DEMUX_MSG_EVENT, data => {
-        console.info(data);
-
-        if (data !== 7) {
-          playerObject.api.unload();
-          setH265(true);
-        } else {
-          setH265(false);
-        }
+      playerObject.flv.on(DEMUX_MSG_EVENT, state => {
+        callback && callback(state);
       });
     }
 
@@ -2541,9 +2867,82 @@ function SinglePlayer({
       onInitPlayer(Object.assign({}, playerObject.api.getApi(), playerObject.event.getApi()));
     }
 
+    return playerObject;
+  }
+
+  function loadPlusPlayer(playerObject) {
+    console.info('进入插件播放模式==>');
+    setPlus(true);
+    playerObject.event = new VideoEventInstance(YUVRef.current.getDom());
+    playerObject.player = YUVRef.current;
+    playerObject.api = new YUVApi(playerObject);
+    setPlayerObj(playerObject);
+
+    if (onInitPlayer) {
+      onInitPlayer(Object.assign({}, playerObject.api.getApi(), playerObject.event.getApi()));
+    }
+  }
+
+  function onClose() {
+    YUVRef.current && YUVRef.current.closeWebSocket();
+  }
+
+  function onPlayerState(state) {
+    setPlayerState(state);
+  }
+
+  function getRate(screenNum) {
+    if (screenNum == 1) {
+      // return '1920*1080'
+      return '1280*720';
+    } else if (screenNum == 4) {
+      return '960*544';
+    } else if (screenNum == 9) {
+      return '640*480';
+    } else if (screenNum == 16) {
+      return '352*288';
+    } else {
+      return '960*544';
+    }
+  }
+
+  useEffect(() => {
+    const playerObject = {
+      playContainer: playContainerRef.current,
+      video: playContainerRef.current.querySelector('video')
+    };
+    setYuvUrl(file);
+
+    if (!file) {
+      onClose();
+      return;
+    } // 1：h264不用插件，其它用插件
+    // 2：全用插件
+    // 0：不用插件
+
+
+    if (VD_RUN_STATE === 1) {
+      loadBrowserPlayer(playerObject, state => {
+        if (state !== 7) {
+          playerObject.api.unload();
+          loadPlusPlayer(playerObject);
+        } else {
+          setPlus(false);
+        }
+      });
+    } else if (VD_RUN_STATE === 2) {
+      loadPlusPlayer(playerObject);
+    } else {
+      loadBrowserPlayer(playerObject);
+    }
+
     return () => {
-      if (playerObject.api) {
-        playerObject.api.unload();
+      if (VD_RUN_STATE !== 2) {
+        if (playerObject.api) {
+          playerObject.api.unload();
+        }
+      } else {
+        onClose();
       }
     };
   }, [file]);
@@ -2552,7 +2951,12 @@ function SinglePlayer({
     ref: playContainerRef
   }, /*#__PURE__*/React.createElement("div", {
     className: "player-mask-layout"
-  }, !isH265 ? /*#__PURE__*/React.createElement("video", {
+  }, isPlus ? /*#__PURE__*/React.createElement(YUVPlayer, {
+    streamUrl: yuvUrl,
+    ratio: rate,
+    ref: YUVRef,
+    onPlayerState: onPlayerState
+  }) : /*#__PURE__*/React.createElement(SimplePlayer, {
     autoPlay: autoPlay,
     preload: preload,
     muted: muted,
@@ -2560,9 +2964,6 @@ function SinglePlayer({
     controls: false,
     playsInline: playsinline,
     loop: loop
-  }) : /*#__PURE__*/React.createElement(YUVPlayer, {
-    streamUrl: file,
-    ratio: "960*554"
   })), /*#__PURE__*/React.createElement(VideoTools, {
     playerObj: playerObj,
     isLive: props.isLive,
@@ -2575,7 +2976,8 @@ function SinglePlayer({
     rightExtContents: props.rightExtContents,
     rightMidExtContents: props.rightMidExtContents,
     draggable: props.draggable,
-    isH265: isH265
+    isPlus: isPlus,
+    playerState: playerState
   }), children);
 }
 
@@ -2591,16 +2993,24 @@ function VideoTools({
   rightExtContents,
   rightMidExtContents,
   errorReloadTimer,
-  isH265
+  isPlus,
+  playerState
 }) {
   if (!playerObj) {
     return /*#__PURE__*/React.createElement(NoSource, null);
   }
 
-  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(VideoMessage, {
+  if (isPlus && playerState === 4) {
+    return /*#__PURE__*/React.createElement(NoSource, null);
+  }
+
+  return /*#__PURE__*/React.createElement(React.Fragment, null, !isPlus ? /*#__PURE__*/React.createElement(VideoMessage, {
+    api: playerObj.api,
+    event: playerObj.event
+  }) : /*#__PURE__*/React.createElement(YUVMessage, {
     api: playerObj.api,
     event: playerObj.event,
-    isH265: isH265
+    playerState: playerState
   }), draggable && /*#__PURE__*/React.createElement(DragEvent, {
     playContainer: playerObj.playContainer,
     api: playerObj.api,
@@ -2620,7 +3030,8 @@ function VideoTools({
     isHistory: false,
     isLive: isLive,
     leftExtContents: leftExtContents,
-    leftMidExtContents: leftMidExtContents
+    leftMidExtContents: leftMidExtContents,
+    isPlus: isPlus
   }), !isLive && /*#__PURE__*/React.createElement(TineLine, {
     api: playerObj.api,
     event: playerObj.event
@@ -2925,19 +3336,19 @@ function HistoryPlayer({
   }, [playIndex, playerObj, playerObj, historyList]);
   const changePlayIndex = useCallback(index => {
     if (index > historyList.fragments.length - 1) {
-      return playerObj.event && playerObj.event.emit(EventName.HISTORY_PLAY_END);
+      return playerObj && playerObj.event && playerObj.event.emit(EventName.HISTORY_PLAY_END);
     }
 
     if (!historyList.fragments[index].file) {
-      changePlayIndex(index + 1);
+      return changePlayIndex(index + 1);
     }
 
-    if (playerObj.event) {
+    if (playerObj && playerObj.event) {
       playerObj.event.emit(EventName.CHANGE_PLAY_INDEX, index);
     }
 
     setPlayStatus([index, 0]);
-  }, [playerObj]);
+  }, [playerObj, historyList]);
   const reloadHistory = useCallback(() => {
     if (playStatus[0] === 0) {
       playerObj.api.seekTo(defaultSeekTime);
@@ -2946,6 +3357,11 @@ function HistoryPlayer({
     setPlayStatus([0, 0]);
     playerObj.event.emit(EventName.RELOAD);
   }, [playerObj]);
+  useEffect(() => {
+    if (!file) {
+      changePlayIndex(playIndex + 1);
+    }
+  }, [file, playIndex, historyList]);
   useEffect(() => {
     if (!file) {
       return;
@@ -3057,7 +3473,7 @@ function VideoTools$1({
   return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(VideoMessage, {
     api: playerObj.api,
     event: playerObj.event,
-    isH265: false
+    isPlus: false
   }), draggable && /*#__PURE__*/React.createElement(DragEvent, {
     playContainer: playerObj.playContainer,
     api: playerObj.api,
