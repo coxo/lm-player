@@ -74,6 +74,7 @@ export const YUVMessage = ({ event, api, playerState}) => {
   const [state, setState] = useState({ status: null, errorTimer: null, loading: false })
 
   const message = useMemo(() => {
+
     if (!state.status) {
       return ''
     }
@@ -81,19 +82,34 @@ export const YUVMessage = ({ event, api, playerState}) => {
       return '视频错误'
     }
     if (state.status === 'reload') {
-      return `视频加载错误，正在进行重连第${state.errorTimer}重连`
+      return `视频加载错误，正在进行重连${state.errorTimer}s...`
+    }
+    if (state.status === 'connet') {
+      return `未安装播放插件`
     }
   }, [state.errorTimer, state.status])
 
   useEffect(() => {
+    let numFlag = null
     if(playerState == 0){
       setState({ status: null, errorTimer: null, loading: true })
     }else if(playerState == 1){
       setState({ status: null, errorTimer: null, loading: false })
+    }else if(playerState == 2){
+      let errorTimer = 1;
+      numFlag = setInterval(()=>{
+        setState({ status: 'reload', errorTimer: ++errorTimer, loading: false })
+      },1000)
     }else if(playerState == 3){
       setState({ status: 'fail', errorTimer: null, loading: false })
     }else if(playerState == 4){
       setState({ status: null, errorTimer: null, loading: false })
+    }else if(playerState == 5){
+      setState({ status: 'connet', errorTimer: null, loading: false })
+    }
+
+    return () => {
+      clearInterval(numFlag)
     }
 
   },[playerState])
@@ -101,14 +117,37 @@ export const YUVMessage = ({ event, api, playerState}) => {
 
   const { loading, status } = state
 
+  const playerDownloadUrl = window.BSConfig && window.BSConfig.playerDownloadUrl
+
 
   return (
-    <div className={`lm-player-message-mask ${loading || status === 'fail' ? 'lm-player-mask-loading-animation' : ''}`}>
+    <div className={`lm-player-message-mask ${loading || status === 'fail' || status === 'connet' || status === 'reload' ? 'lm-player-mask-loading-animation' : ''} ${status === 'connet' ? 'lm-player-puls-event' : ''}`}>
       <IconFont
         type={status === 'fail' ? 'lm-player-YesorNo_No_Dark' : 'lm-player-Loading'}
         className={`${loading && status !== 'fail' ? 'lm-player-loading-animation' : status === 'fail' ? 'lm-player-loadfail' : ''} lm-player-loading-icon`}
       />
+
+      {
+        status === 'connet'?
+        <IconFont type={'lm-player-YesorNo_No_Dark'}
+        className={`lm-player-loadfail lm-player-loading-icon`}
+      />:null
+      }
+
+     {
+        status === 'reload'?
+        <IconFont type={'lm-player-Loading'}
+        className={`lm-player-loading-animation lm-player-loading-icon`}
+      />:null
+      }
+      
       <span className="lm-player-message">{message}</span>
+
+      {
+        status === 'connet' ? 
+        <a className="lm-player-plus" target="_blank" href={playerDownloadUrl} download="player.exe" rel="noopener noreferrer">下载</a>
+         :null
+      }
     </div>
   )
 }

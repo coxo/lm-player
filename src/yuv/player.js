@@ -265,8 +265,8 @@ class WebSocketController {
   _onWebSocketError(e) {
     this._status = ControllerStatus.kError;
     let info = {
-      code: e.code,
-      msg: e.message
+      code: e.code || 1000,
+      msg: e.message || '插件未连接，请运行插件！'
     };
 
     if (this._onError) {
@@ -560,14 +560,14 @@ class YUVPlayer extends React.Component {
   _onComplete(e) {// console.info('_onComplete==>', e)
   }
 
-  _onError(e) {
+  _onError(e, info) {
     this.websocket = null;
-    this.setPlayerState(3);
+    this.setPlayerState(2);
     this.errorTimer = this.errorTimer + 1;
     const that = this;
-    console.error(e);
+    console.error(e, info);
 
-    if (this.errorTimer < 4 && errorFlag == 1) {
+    if (this.errorTimer < 4 && this.errorFlag == 1) {
       this.reloadTimer = setTimeout(() => {
         console.warn(`视频播放出错，正在进行重连${that.errorTimer}`);
 
@@ -575,8 +575,22 @@ class YUVPlayer extends React.Component {
       }, 2 * 1000);
     }
 
+    if (this.errorTimer == 4 && this.errorFlag == 1) {
+      this.setPlayerState(3);
+    }
+
+    if (info && info.code == 1000) {
+      this.setPlayerState(5);
+    } // 地址错误无法取流
+
+
+    if (e.code == 710044) {
+      this.setPlayerState(3);
+    }
+
     if (e.code == 710047) {
       this.errorFlag = 0;
+      this.setPlayerState(3);
     }
   }
 
@@ -584,8 +598,7 @@ class YUVPlayer extends React.Component {
     let bufferData = new Uint8Array(event.data);
     let ratioWidth = this.getRatioNumber(bufferData, [0, 2]);
     let ratioHeight = this.getRatioNumber(bufferData, [2, 4]);
-    let canvas = ReactDOM.findDOMNode(this.refs['currentCanvas']);
-    this.loadYuv(canvas, ratioWidth, ratioHeight, event.data); // this.loadRGB(canvas,ratioWidth,ratioHeight,bufferData)
+    this.loadYuv(ratioWidth, ratioHeight, event.data);
   }
 
   loadRGB(canvas, ratioWidth, ratioHeight, data) {
@@ -603,11 +616,7 @@ class YUVPlayer extends React.Component {
     canvasContext.putImageData(imgdata, 0, 0);
   }
 
-  loadYuv(canvas, ratioWidth, ratioHeight, data) {
-    this.player = new WebGLPlayer(canvas, {
-      preserveDrawingBuffer: false
-    });
-    this.player.setSizefunction(ratioWidth, ratioHeight, 1920);
+  loadYuv(ratioWidth, ratioHeight, data) {
     this.player.renderFrame(ratioWidth, ratioHeight, new Uint8Array(data, 4));
   }
 
@@ -624,6 +633,8 @@ class YUVPlayer extends React.Component {
     this.player = new WebGLPlayer(canvas, {
       preserveDrawingBuffer: false
     });
+    let rateArr = this.RATIO.split('*');
+    this.player.setSizefunction(rateArr[0], rateArr[1], 1920);
     this.setPlayerState(1);
     this.errorTimer = 0;
     clearTimeout(this.reloadTimer);
@@ -664,6 +675,10 @@ class YUVPlayer extends React.Component {
 
   getDom() {
     return ReactDOM.findDOMNode(this.refs['currentCanvas']);
+  }
+
+  getWGL() {
+    return this.player;
   }
 
   render() {

@@ -3,7 +3,8 @@ import EventName from '../event/eventName'
 
 export default class YUVApi {
   constructor({ player, playContainer, event, flv, hls }) {
-    this.player = player
+    this.currentCanvas = player
+    this.player = player && player.getDom()
     this.playContainer = playContainer
     this.flv = flv
     this.hls = hls
@@ -77,29 +78,14 @@ export default class YUVApi {
    * 视频重载
    */
   reload(notEmit) {
-    if (this.getCurrentTime !== 0) {
-      this.seekTo(0)
-    }
-    if (this.hls) {
-      this.hls.swapAudioCodec()
-      this.hls.recoverMediaError()
-    }
-    this.unload()
-    this.load()
-    !notEmit && this.event.emit(EventName.RELOAD)
+    this.currentCanvas && this.currentCanvas.closeWebSocket();
+    this.currentCanvas && this.currentCanvas.openPlayer();
   }
   unload() {
-    this.flv && this.flv.unload()
-    this.hls && this.hls.stopLoad()
+    this.currentCanvas && this.currentCanvas.closeWebSocket();
   }
   load() {
-    if (this.flv) {
-      this.flv.load()
-    }
-    if (this.hls) {
-      this.hls.startLoad()
-      this.hls.loadSource(this.hls.url)
-    }
+    this.currentCanvas && this.currentCanvas.openPlayer();
   }
   setVolume(fraction) {
     this.player.volume = fraction
@@ -203,16 +189,35 @@ export default class YUVApi {
    * 视频截屏方法
    */
   snapshot() {
-    return this.player && this.player.getDom().toDataURL()
+    return this.player.toDataURL()
   }
   setScale(num, isRest = false) {
-   console.info('正在开发中...')
+    let scale = this.scale + num
+    if (isRest) {
+      scale = num
+    } else {
+      if (scale < 1) {
+        scale = 1
+      }
+      if (scale > 3) {
+        scale = 3
+      }
+    }
+    this.scale = scale
+    this.player.style.transition = 'transform 0.3s'
+    this.__setTransform()
+    this.event.emit(EventName.TRANSFORM)
+    setTimeout(() => {
+      this.player.style.transition = 'unset'
+    }, 1000)
   }
   getScale() {
     return this.scale
   }
   setPosition(position, isAnimate) {
-    console.info('正在开发中...')
+    this.position = position
+    this.player.style.transition = isAnimate ? 'transform 0.3s' : 'unset'
+    this.__setTransform()
   }
   getPosition() {
     return this.position
