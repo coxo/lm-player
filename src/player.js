@@ -21,6 +21,7 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
   const playContainerRef = useRef(null)
   const YUVRef = useRef(null)
   const [playerObj, setPlayerObj] = useState(null)
+  const playerRef = useRef(null)
 
   const [playerState, setPlayerState] = useState(0)
 
@@ -37,6 +38,7 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
   const [isPlus, setPlus] = useState(VD_RUN_STATE=== 2 ? true : false)
 
   const [yuvUrl, setYuvUrl] = useState(null)
+  
 
   
   function loadBrowserPlayer(playerObject, callback){
@@ -60,7 +62,8 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
 
     playerObject.event = new VideoEvent(playerObject.video)
     playerObject.api = new Api(playerObject)
-    setPlayerObj(playerObject)
+    playerRef.current = playerObject
+    setPlayerObj(() => playerObject)
 
     if (onInitPlayer) {
       onInitPlayer(Object.assign({}, playerObject.api.getApi(), playerObject.event.getApi()))
@@ -105,6 +108,22 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
     }
   }
 
+  useEffect(
+    () => () => {
+      if(VD_RUN_STATE !== 2){
+        if (playerRef.current && playerRef.current.event) {
+          playerRef.current.event.destroy()
+        }
+        if (playerRef.current && playerRef.current.api) {
+          playerRef.current.api.destroy()
+        }
+      }else{
+        onClose()
+      }
+    },
+    [file]
+  )
+
   useEffect(() => {
     const playerObject = {
       playContainer: playContainerRef.current,
@@ -135,16 +154,6 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
     } else {
       loadBrowserPlayer(playerObject)
     }
-
-    return () => {
-      if(VD_RUN_STATE !== 2){
-        if (playerObject.api) {
-          playerObject.api.unload()
-        }
-      }else{
-        onClose()
-      }
-    }
   }, [file])
 
   return (
@@ -168,6 +177,7 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
      <VideoTools
       playerObj={playerObj}
       isLive={props.isLive}
+      key={file}
       hideContrallerBar={props.hideContrallerBar}
       errorReloadTimer={props.errorReloadTimer}
       scale={props.scale}

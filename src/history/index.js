@@ -16,6 +16,7 @@ import { computedTimeAndIndex } from './utils'
 function HistoryPlayer({ type, historyList, defaultTime, className, autoPlay, muted, poster, playsinline, loop, preload, children, onInitPlayer, ...props }) {
   const playContainerRef = useRef(null)
   const [playerObj, setPlayerObj] = useState(null)
+  const playerRef = useRef(null)
   const [playStatus, setPlayStatus] = useState(() => computedTimeAndIndex(historyList, defaultTime))
   const playIndex = useMemo(() => playStatus[0], [playStatus])
   const defaultSeekTime = useMemo(() => playStatus[1], [playStatus])
@@ -84,6 +85,18 @@ function HistoryPlayer({ type, historyList, defaultTime, className, autoPlay, mu
     }
   }, [file, playIndex, historyList])
 
+  useEffect(
+    () => () => {
+      if (playerRef.current && playerRef.current.event) {
+        playerRef.current.event.destroy()
+      }
+      if (playerRef.current && playerRef.current.api) {
+        playerRef.current.api.destroy()
+      }
+    },
+    [file]
+  )
+
   useEffect(() => {
     if (!file) {
       return
@@ -104,6 +117,7 @@ function HistoryPlayer({ type, historyList, defaultTime, className, autoPlay, mu
     }
     playerObject.event = new VideoEvent(playerObject.video)
     playerObject.api = new Api(playerObject)
+    playerRef.current = playerObject
     setPlayerObj(playerObject)
     if (defaultSeekTime) {
       playerObject.api.seekTo(defaultSeekTime)
@@ -111,17 +125,7 @@ function HistoryPlayer({ type, historyList, defaultTime, className, autoPlay, mu
     if (onInitPlayer) {
       onInitPlayer(Object.assign({}, playerObject.api.getApi(), playerObject.event.getApi(), { seekTo, changePlayIndex, reload: reloadHistory }))
     }
-    
-    return () => {
-      if (playerObject.api) {
-        playerObject.api.unload()
-      }
-    }
   }, [historyList, file])
-
-  /**
-   * 根据时间计算当前对应的播放索引
-   */
 
   return (
     <div className={`lm-player-container ${className}`} ref={playContainerRef}>
@@ -146,6 +150,7 @@ function HistoryPlayer({ type, historyList, defaultTime, className, autoPlay, mu
         historyList={historyList}
         playIndex={playIndex}
         seekTo={seekTo}
+        key={file}
       />
       {children}
     </div>

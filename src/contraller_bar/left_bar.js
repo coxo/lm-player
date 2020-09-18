@@ -30,7 +30,6 @@ function LeftBar({ api, event, video, isHistory, reloadHistory, isLive, isVolume
       volume:0
     }
   }
-
   //缓存值
   const paused = useMemo(() => video.paused, [dep, video])
   const statusIconClassName = useMemo(() => (paused ? 'lm-player-Play_Main' : 'lm-player-Pause_Main'), [paused])

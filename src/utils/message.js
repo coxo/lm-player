@@ -3,7 +3,7 @@ import IconFont from '../simple/iconfont'
 import EventName from '../event/eventName'
 import '../style/message.less'
 
-function VideoMessage({ event, api}) {
+function VideoMessage({ event, api }) {
   const [state, setState] = useState({ status: null, errorTimer: null, loading: false })
 
   const message = useMemo(() => {
@@ -14,7 +14,7 @@ function VideoMessage({ event, api}) {
       return '视频错误'
     }
     if (state.status === 'reload') {
-      return `视频加载错误，正在进行重连第${state.errorTimer}重连`
+      return `视频加载错误，正在进行重连第${state.errorTimer}次重连`
     }
   }, [state.errorTimer, state.status])
 
@@ -39,25 +39,22 @@ function VideoMessage({ event, api}) {
     event.on(EventName.HISTORY_PLAY_END, playEnd)
     event.on(EventName.CLEAR_ERROR_TIMER, reloadSuccess)
 
-    return () => {
-      event.removeEventListener('loadstart', openLoading)
-      event.removeEventListener('waiting', openLoading)
-      event.removeEventListener('seeking', openLoading)
-      event.removeEventListener('loadeddata', closeLoading)
-      event.removeEventListener('canplay', closeLoading)
-      event.off(EventName.ERROR_RELOAD, errorReload)
-      event.off(EventName.RELOAD_FAIL, reloadFail)
-      event.off(EventName.RELOAD_SUCCESS, reloadSuccess)
-      event.off(EventName.RELOAD, reload)
-      event.off(EventName.HISTORY_PLAY_END, playEnd)
-      event.off(EventName.CLEAR_ERROR_TIMER, reloadSuccess)
-    }
+    // return () => {
+    //   event.removeEventListener('loadstart', openLoading)
+    //   event.removeEventListener('waiting', openLoading)
+    //   event.removeEventListener('seeking', openLoading)
+    //   event.removeEventListener('loadeddata', closeLoading)
+    //   event.removeEventListener('canplay', closeLoading)
+    //   event.off(EventName.ERROR_RELOAD, errorReload)
+    //   event.off(EventName.RELOAD_FAIL, reloadFail)
+    //   event.off(EventName.RELOAD_SUCCESS, reloadSuccess)
+    //   event.off(EventName.RELOAD, reload)
+    //   event.off(EventName.HISTORY_PLAY_END, playEnd)
+    //   event.off(EventName.CLEAR_ERROR_TIMER, reloadSuccess)
+    // }
   }, [event])
-  
 
   const { loading, status } = state
-
-
   return (
     <div className={`lm-player-message-mask ${loading || status === 'fail' ? 'lm-player-mask-loading-animation' : ''}`}>
       <IconFont
@@ -161,5 +158,3 @@ export const NoSource = () => {
 }
 
 export default VideoMessage
-
-

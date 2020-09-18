@@ -43,20 +43,20 @@ function ErrorEvent({ event, api, errorReloadTimer, flv, hls, changePlayIndex, i
     //获取video状态清除错误状态
     event.addEventListener('canplay', reloadSuccess, false)
 
-    return () => {
-      if (flv) {
-        flv.off('error', errorHandle)
-      }
-      if (hls) {
-        hls.off('hlsError', errorHandle)
-      }
-      if (isHistory) {
-        event.off(EventName.CHANGE_PLAY_INDEX, clearErrorTimer)
-        event.off(EventName.CLEAR_ERROR_TIMER, clearErrorTimer)
-      }
-      event.removeEventListener('error', errorHandle, false)
-      event.removeEventListener('canplay', reloadSuccess, false)
-    }
+    // return () => {
+    //   if (flv) {
+    //     flv.off('error', errorHandle)
+    //   }
+    //   if (hls) {
+    //     hls.off('hlsError', errorHandle)
+    //   }
+    //   if (isHistory) {
+    //     event.off(EventName.CHANGE_PLAY_INDEX, clearErrorTimer)
+    //     event.off(EventName.CLEAR_ERROR_TIMER, clearErrorTimer)
+    //   }
+    //   event.removeEventListener('error', errorHandle, false)
+    //   event.removeEventListener('canplay', reloadSuccess, false)
+    // }
   }, [event, flv, hls, errorTimer])
 
   useEffect(() => {
@@ -66,6 +66,7 @@ function ErrorEvent({ event, api, errorReloadTimer, flv, hls, changePlayIndex, i
     if (errorTimer > errorReloadTimer) {
       return isHistory ? changePlayIndex(playIndex + 1) : event.emit(EventName.RELOAD_FAIL), api.unload()
     }
+   
 
     console.warn(`视频播放出错，正在进行重连${errorTimer}`)
     reloadTimer.current = setTimeout(() => {
@@ -74,7 +75,7 @@ function ErrorEvent({ event, api, errorReloadTimer, flv, hls, changePlayIndex, i
     }, 2 * 1000)
 
     return () => {
-     clearTimeout(reloadTimer.current)
+      clearTimeout(reloadTimer.current)
     }
   }, [errorTimer, api, event, flv, hls])
 
