@@ -39,22 +39,23 @@ function TineLine({ event, api, visibel, historyList, playIndex, seekTo, default
     event.on(EventName.HISTORY_PLAY_END, historyPlayEnd)
     event.on(EventName.RELOAD, reload)
 
-    // return () => {
-    //   event.removeEventListener('loadedmetadata', getDuration)
-    //   event.removeEventListener('durationchange', getDuration)
-    //   event.removeEventListener('timeupdate', getCurrentTime)
-    //   event.removeEventListener('progress', getBuffered)
-    //   event.removeEventListener('suspend', getBuffered)
-    //   event.removeEventListener('seeked', seekendPlay)
-    //   event.off(EventName.HISTORY_PLAY_END, historyPlayEnd)
-    //   event.off(EventName.RELOAD, reload)
-    // }
+    return () => {
+      event.removeEventListener('loadedmetadata', getDuration)
+      event.removeEventListener('durationchange', getDuration)
+      event.removeEventListener('timeupdate', getCurrentTime)
+      event.removeEventListener('progress', getBuffered)
+      event.removeEventListener('suspend', getBuffered)
+      event.removeEventListener('seeked', seekendPlay)
+      event.off(EventName.HISTORY_PLAY_END, historyPlayEnd)
+      event.off(EventName.RELOAD, reload)
+    }
   }, [event, api])
 
   const changePlayTime = useCallback(
     (percent) => {
       const currentTime = percent * historyList.duration //修正一下误差
       const [index, time] = computedTimeAndIndex(historyList, currentTime)
+      console.log(index, time)
       seekTo(currentTime, index)
       setState((old) => ({ ...old, currentTime: time, isEnd: false }))
     },

@@ -61,7 +61,9 @@ class VideoEventInstance {
     return {
       on: this.on.bind(this),
       off: this.off.bind(this),
-      emit: this.emit.bind(this)
+      emit: this.emit.bind(this),
+      addEventListener: this.addEventListener.bind(this),
+      removeEventListener: this.removeEventListener.bind(this)
     };
   }
 
@@ -135,23 +137,7 @@ function createFlvPlayer(video, options) {
  */
 
 function getVideoType(url) {
-  const urlInfo = new URL(url);
-  const path = `${urlInfo.origin}${urlInfo.pathname}`; // eslint-disable-next-line no-useless-escape
-
-  const reg = /([^\.\/\\]+)\.(([a-z]|[0-9])+(\?\S+)?)$/i;
-  const resultArr = reg.exec(path);
-
-  if (!resultArr) {
-    return url.indexOf('.flv') > -1 ? 'flv' : url.indexOf('.m3u8') > -1 ? 'm3u8' : 'native';
-  }
-
-  const suffix = resultArr[2].replace(resultArr[4], '');
-
-  if (!suffix) {
-    return url.indexOf('.flv') > -1 ? 'flv' : url.indexOf('.m3u8') > -1 ? 'm3u8' : 'native';
-  }
-
-  return suffix;
+  return url.indexOf('.flv') > -1 ? 'flv' : url.indexOf('.m3u8') > -1 ? 'm3u8' : 'native';
 }
 /**
  * 日期格式化
@@ -863,7 +849,11 @@ function ContrallerEvent({
 
     playContainer.addEventListener('mousemove', showContraller, false);
     playContainer.addEventListener('mouseout', hideContraller, false);
-  });
+    return () => {
+      playContainer.removeEventListener('mousemove', showContraller, false);
+      playContainer.removeEventListener('mouseout', hideContraller, false);
+    };
+  }, []);
   return React.Children.map(children, child => /*#__PURE__*/React.isValidElement(child) ? /*#__PURE__*/React.cloneElement(child, {
     visibel
   }) : child);
@@ -888,7 +878,7 @@ function VideoMessage({
     }
 
     if (state.status === 'reload') {
-      return `视频加载错误，正在进行重连第${state.errorTimer}重连`;
+      return `视频加载错误，正在进行重连第${state.errorTimer}次重连`;
     }
   }, [state.errorTimer, state.status]);
   useEffect(() => {
@@ -933,20 +923,19 @@ function VideoMessage({
     event.on(EventName.RELOAD_SUCCESS, reloadSuccess);
     event.on(EventName.RELOAD, reload);
     event.on(EventName.HISTORY_PLAY_END, playEnd);
-    event.on(EventName.CLEAR_ERROR_TIMER, reloadSuccess);
-    return () => {
-      event.removeEventListener('loadstart', openLoading);
-      event.removeEventListener('waiting', openLoading);
-      event.removeEventListener('seeking', openLoading);
-      event.removeEventListener('loadeddata', closeLoading);
-      event.removeEventListener('canplay', closeLoading);
-      event.off(EventName.ERROR_RELOAD, errorReload);
-      event.off(EventName.RELOAD_FAIL, reloadFail);
-      event.off(EventName.RELOAD_SUCCESS, reloadSuccess);
-      event.off(EventName.RELOAD, reload);
-      event.off(EventName.HISTORY_PLAY_END, playEnd);
-      event.off(EventName.CLEAR_ERROR_TIMER, reloadSuccess);
-    };
+    event.on(EventName.CLEAR_ERROR_TIMER, reloadSuccess); // return () => {
+    //   event.removeEventListener('loadstart', openLoading)
+    //   event.removeEventListener('waiting', openLoading)
+    //   event.removeEventListener('seeking', openLoading)
+    //   event.removeEventListener('loadeddata', closeLoading)
+    //   event.removeEventListener('canplay', closeLoading)
+    //   event.off(EventName.ERROR_RELOAD, errorReload)
+    //   event.off(EventName.RELOAD_FAIL, reloadFail)
+    //   event.off(EventName.RELOAD_SUCCESS, reloadSuccess)
+    //   event.off(EventName.RELOAD, reload)
+    //   event.off(EventName.HISTORY_PLAY_END, playEnd)
+    //   event.off(EventName.CLEAR_ERROR_TIMER, reloadSuccess)
+    // }
   }, [event]);
   const {
     loading,
@@ -1177,15 +1166,14 @@ function TineLine({
     event.addEventListener('timeupdate', getCurrentTime);
     event.addEventListener('progress', getBuffered);
     event.addEventListener('suspend', getBuffered);
-    event.addEventListener('seeked', seekendPlay);
-    return () => {
-      event.removeEventListener('loadedmetadata', getDuration);
-      event.removeEventListener('durationchange', getDuration);
-      event.removeEventListener('timeupdate', getCurrentTime);
-      event.removeEventListener('progress', getBuffered);
-      event.removeEventListener('suspend', getBuffered);
-      event.removeEventListener('seeked', seekendPlay);
-    };
+    event.addEventListener('seeked', seekendPlay); // return () => {
+    //   event.removeEventListener('loadedmetadata', getDuration)
+    //   event.removeEventListener('durationchange', getDuration)
+    //   event.removeEventListener('timeupdate', getCurrentTime)
+    //   event.removeEventListener('progress', getBuffered)
+    //   event.removeEventListener('suspend', getBuffered)
+    //   event.removeEventListener('seeked', seekendPlay)
+    // }
   }, [event, api]);
   const {
     duration,
@@ -1243,14 +1231,11 @@ function ErrorEvent({
   const reloadTimer = useRef(null);
   useEffect(() => {
     const errorHandle = (...args) => {
-      console.error(...args);
-
-      if (args && args.length > 2 && args[2].code == 11) {
-        api.unload();
-        api.load();
+      if (args[2] && args[2].msg && args[2].msg.includes("Unsupported audio")) {
         return;
       }
 
+      console.error(...args);
       errorInfo.current = args;
       setErrorTime(errorTimer + 1);
     };
@@ -1284,12 +1269,16 @@ function ErrorEvent({
 
     event.addEventListener('canplay', reloadSuccess, false);
     return () => {
-      if (flv) {
-        flv.off('error', errorHandle);
-      }
+      try {
+        if (flv) {
+          flv.off('error', errorHandle);
+        }
 
-      if (hls) {
-        hls.off('hlsError', errorHandle);
+        if (hls) {
+          hls.off('hlsError', errorHandle);
+        }
+      } catch (e) {
+        console.warn(e);
       }
 
       if (isHistory) {
@@ -1307,7 +1296,9 @@ function ErrorEvent({
     }
 
     if (errorTimer > errorReloadTimer) {
-      return isHistory ? changePlayIndex(playIndex + 1) : event.emit(EventName.RELOAD_FAIL), api.unload();
+      isHistory ? changePlayIndex(playIndex + 1) : event.emit(EventName.RELOAD_FAIL);
+      api.unload();
+      return;
     }
 
     console.warn(`视频播放出错，正在进行重连${errorTimer}`);
@@ -1391,6 +1382,7 @@ DragEvent.propTypes = {
   playerProps: PropTypes.object
 };
 
+let index = 0;
 class Api {
   constructor({
     video,
@@ -1460,12 +1452,23 @@ class Api {
     this.unload();
 
     if (this.flv) {
+      index++;
       this.flv.destroy();
     }
 
     if (this.hls) {
+      index++;
       this.hls.destroy();
     }
+
+    this.player = null;
+    this.playContainer = null;
+    this.flv = null;
+    this.hls = null;
+    this.event = null;
+    this.scale = null;
+    this.position = null;
+    console.warn('destroy', index);
   }
   /**
    * 设置currentTime实现seek
@@ -1482,10 +1485,15 @@ class Api {
       this.flv.load();
     }
 
-    this.player.currentTime = seconds;
+    console.log(this.player);
 
-    if (!noEmit) {
-      this.event.emit(EventName.SEEK, seconds);
+    if (this.player) {
+      console.log(this.player.currentTime);
+      this.player.currentTime = seconds;
+
+      if (!noEmit) {
+        this.event.emit(EventName.SEEK, seconds);
+      }
     }
   }
   /**
@@ -1605,7 +1613,7 @@ class Api {
 
 
   getBufferedTime() {
-    if (!this.player) return null;
+    if (!this.player) return [];
     const {
       buffered
     } = this.player;
@@ -2421,7 +2429,11 @@ class WebSocketController {
 class WebGLPlayer {
   constructor(canvas, parent, options) {
     this.canvas = canvas;
-    this.gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    this.gl = canvas.getContext('webgl', {
+      preserveDrawingBuffer: true
+    }) || canvas.getContext('experimental-webgl', {
+      preserveDrawingBuffer: true
+    });
 
     this._init();
   }
@@ -2888,6 +2900,7 @@ function SinglePlayer({
   const playContainerRef = useRef(null);
   const YUVRef = useRef(null);
   const [playerObj, setPlayerObj] = useState(null);
+  const playerRef = useRef(null);
   const [playerState, setPlayerState] = useState(0);
   const rate = useMemo(() => getRate(screenNum), [screenNum]);
   const DEMUX_MSG_EVENT = 'demux_msg'; // 播放运行模式
@@ -2922,7 +2935,8 @@ function SinglePlayer({
 
     playerObject.event = new VideoEventInstance(playerObject.video);
     playerObject.api = new Api(playerObject);
-    setPlayerObj(playerObject);
+    playerRef.current = playerObject;
+    setPlayerObj(() => playerObject);
 
     if (onInitPlayer) {
       onInitPlayer(Object.assign({}, playerObject.api.getApi(), playerObject.event.getApi()));
@@ -2967,6 +2981,19 @@ function SinglePlayer({
     }
   }
 
+  useEffect(() => () => {
+    if (VD_RUN_STATE !== 2) {
+      if (playerRef.current && playerRef.current.event) {
+        playerRef.current.event.destroy();
+      }
+
+      if (playerRef.current && playerRef.current.api) {
+        playerRef.current.api.destroy();
+      }
+    } else {
+      onClose();
+    }
+  }, [file]);
   useEffect(() => {
     const playerObject = {
       playContainer: playContainerRef.current,
@@ -2996,16 +3023,6 @@ function SinglePlayer({
     } else {
       loadBrowserPlayer(playerObject);
     }
-
-    return () => {
-      if (VD_RUN_STATE !== 2) {
-        if (playerObject.api) {
-          playerObject.api.unload();
-        }
-      } else {
-        onClose();
-      }
-    };
   }, [file]);
   return /*#__PURE__*/React.createElement("div", {
     className: `lm-player-container ${className}`,
@@ -3028,6 +3045,7 @@ function SinglePlayer({
   })), /*#__PURE__*/React.createElement(VideoTools, {
     playerObj: playerObj,
     isLive: props.isLive,
+    key: file,
     hideContrallerBar: props.hideContrallerBar,
     errorReloadTimer: props.errorReloadTimer,
     scale: props.scale,
@@ -3255,6 +3273,7 @@ function TineLine$1({
     const currentTime = percent * historyList.duration; //修正一下误差
 
     const [index, time] = computedTimeAndIndex(historyList, currentTime);
+    console.log(index, time);
     seekTo(currentTime, index);
     setState(old => ({ ...old,
       currentTime: time,
@@ -3361,6 +3380,7 @@ function HistoryPlayer({
 }) {
   const playContainerRef = useRef(null);
   const [playerObj, setPlayerObj] = useState(null);
+  const playerRef = useRef(null);
   const [playStatus, setPlayStatus] = useState(() => computedTimeAndIndex(historyList, defaultTime));
   const playIndex = useMemo(() => playStatus[0], [playStatus]);
   const defaultSeekTime = useMemo(() => playStatus[1], [playStatus]);
@@ -3382,47 +3402,57 @@ function HistoryPlayer({
   const seekTo = useCallback(currentTime => {
     const [index, seekTime] = computedTimeAndIndex(historyList, currentTime);
 
-    if (playerObj.event && playerObj.api) {
+    if (playerRef.current.event && playerRef.current.api) {
       //判断是否需要更新索引
       setPlayStatus(old => {
         if (old[0] !== index) {
           return [index, seekTime];
         } else {
-          playerObj.api.seekTo(seekTime, true);
-          playerObj.event.emit(EventName.SEEK, currentTime);
+          playerRef.current.api.seekTo(seekTime, true);
           return old;
         }
       });
     }
-  }, [playIndex, playerObj, playerObj, historyList]);
+  }, [playIndex, historyList]);
   const changePlayIndex = useCallback(index => {
     if (index > historyList.fragments.length - 1) {
-      return playerObj && playerObj.event && playerObj.event.emit(EventName.HISTORY_PLAY_END);
+      return playerRef.current && playerRef.current.event && playerRef.current.event.emit(EventName.HISTORY_PLAY_END);
     }
 
     if (!historyList.fragments[index].file) {
       return changePlayIndex(index + 1);
     }
 
-    if (playerObj && playerObj.event) {
-      playerObj.event.emit(EventName.CHANGE_PLAY_INDEX, index);
+    if (playerRef.current && playerRef.current.event) {
+      playerRef.current.event.emit(EventName.CHANGE_PLAY_INDEX, index);
     }
 
     setPlayStatus([index, 0]);
-  }, [playerObj, historyList]);
+  }, [historyList]);
   const reloadHistory = useCallback(() => {
     if (playStatus[0] === 0) {
-      playerObj.api.seekTo(defaultSeekTime);
+      playerRef.current.api.seekTo(defaultSeekTime);
     }
 
     setPlayStatus([0, 0]);
-    playerObj.event.emit(EventName.RELOAD);
-  }, [playerObj]);
+    playerRef.current.event.emit(EventName.RELOAD);
+  }, []);
   useEffect(() => {
     if (!file) {
       changePlayIndex(playIndex + 1);
     }
   }, [file, playIndex, historyList]);
+  useEffect(() => () => {
+    if (playerRef.current && playerRef.current.event) {
+      playerRef.current.event.destroy();
+    }
+
+    if (playerRef.current && playerRef.current.api) {
+      playerRef.current.api.destroy();
+    }
+
+    playerRef.current = null;
+  }, [file]);
   useEffect(() => {
     if (!file) {
       return;
@@ -3432,24 +3462,37 @@ function HistoryPlayer({
       playContainer: playContainerRef.current,
       video: playContainerRef.current.querySelector('video')
     };
+    let isInit = false;
     const formartType = getVideoType(file);
 
     if (formartType === 'flv' || type === 'flv') {
+      isInit = true;
       playerObject.flv = createFlvPlayer(playerObject.video, { ...props,
         file
       });
     }
 
     if (formartType === 'm3u8' || type === 'hls') {
+      isInit = true;
       playerObject.hls = createHlsPlayer(playerObject.video, file);
     }
 
-    if (!['flv', 'm3u8'].includes(formartType) || type === 'native') {
+    if (!isInit && (!['flv', 'm3u8'].includes(formartType) || type === 'native')) {
       playerObject.video.src = file;
     }
 
+    if (playerObject.event) {
+      playerObject.event.destroy();
+    }
+
     playerObject.event = new VideoEventInstance(playerObject.video);
+
+    if (playerObject.api) {
+      playerObject.api.destroy();
+    }
+
     playerObject.api = new Api(playerObject);
+    playerRef.current = playerObject;
     setPlayerObj(playerObject);
 
     if (defaultSeekTime) {
@@ -3463,17 +3506,7 @@ function HistoryPlayer({
         reload: reloadHistory
       }));
     }
-
-    return () => {
-      if (playerObject.api) {
-        playerObject.api.unload();
-      }
-    };
   }, [historyList, file]);
-  /**
-   * 根据时间计算当前对应的播放索引
-   */
-
   return /*#__PURE__*/React.createElement("div", {
     className: `lm-player-container ${className}`,
     ref: playContainerRef
@@ -3504,7 +3537,8 @@ function HistoryPlayer({
     reloadHistory: reloadHistory,
     historyList: historyList,
     playIndex: playIndex,
-    seekTo: seekTo
+    seekTo: seekTo,
+    key: file
   }), children);
 }
 

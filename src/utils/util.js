@@ -57,19 +57,7 @@ export function createFlvPlayer(video, options) {
  * @param {*} url
  */
 export function getVideoType(url) {
-  const urlInfo = new URL(url)
-  const path = `${urlInfo.origin}${urlInfo.pathname}`
-  // eslint-disable-next-line no-useless-escape
-  const reg = /([^\.\/\\]+)\.(([a-z]|[0-9])+(\?\S+)?)$/i
-  const resultArr = reg.exec(path)
-  if (!resultArr) {
-    return url.indexOf('.flv') > -1 ? 'flv' : url.indexOf('.m3u8') > -1 ? 'm3u8' : 'native'
-  }
-  const suffix = resultArr[2].replace(resultArr[4], '')
-  if (!suffix) {
-    return url.indexOf('.flv') > -1 ? 'flv' : url.indexOf('.m3u8') > -1 ? 'm3u8' : 'native'
-  }
-  return suffix
+  return url.indexOf('.flv') > -1 ? 'flv' : url.indexOf('.m3u8') > -1 ? 'm3u8' : 'native'
 }
 
 /**
@@ -164,7 +152,7 @@ export function isFullscreen(ele) {
 export function fullScreenListener(isAdd, fullscreenchange) {
   const funcName = isAdd ? 'addEventListener' : 'removeEventListener'
   const fullScreenEvents = ['fullscreenchange', 'mozfullscreenchange', 'webkitfullscreenchange', 'msfullscreenchange']
-  fullScreenEvents.map(v => document[funcName](v, fullscreenchange))
+  fullScreenEvents.map((v) => document[funcName](v, fullscreenchange))
 }
 
 /**
@@ -222,7 +210,5 @@ export function computedBound(ele, currentPosition, scale) {
 }
 
 export function getRandom() {
-  return Math.random()
-    .toString(36)
-    .substr(2)
+  return Math.random().toString(36).substr(2)
 }

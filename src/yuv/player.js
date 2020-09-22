@@ -281,7 +281,7 @@ class WebSocketController {
 class WebGLPlayer {
   constructor(canvas, parent, options) {
     this.canvas = canvas;
-    this.gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    this.gl = canvas.getContext('webgl', {preserveDrawingBuffer: true}) || canvas.getContext('experimental-webgl', {preserveDrawingBuffer: true});
 
     this._init();
   }

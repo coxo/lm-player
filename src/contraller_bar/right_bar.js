@@ -32,6 +32,7 @@ function RightBar({ playContainer, api, scale, snapshot, rightExtContents, right
     [api, playContainer]
   )
 
+
   return (
     <div className="contraller-right-bar">
       {rightMidExtContents}
