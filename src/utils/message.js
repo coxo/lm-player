@@ -142,7 +142,7 @@ export const YUVMessage = ({ event, api, playerState}) => {
 
       {
         status === 'connet' ? 
-        <a className="lm-player-plus" target="_blank" href={playerDownloadUrl} download="player.exe" rel="noopener noreferrer">下载</a>
+        <a className="lm-player-plus" target="_blank" href={playerDownloadUrl} style='pointer-events: all;' download="ZVPlayer.exe" rel="noopener noreferrer">下载</a>
          :null
       }
     </div>
