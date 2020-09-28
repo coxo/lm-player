@@ -1048,7 +1048,8 @@ const YUVMessage = ({
     className: "lm-player-plus",
     target: "_blank",
     href: playerDownloadUrl,
-    download: "player.exe",
+    style: "pointer-events: all;",
+    download: "ZVPlayer.exe",
     rel: "noopener noreferrer"
   }, "\u4E0B\u8F7D") : null);
 };
