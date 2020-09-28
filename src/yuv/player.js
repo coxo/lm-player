@@ -485,6 +485,7 @@ class WebGLPlayer {
     let canvasWidth = Math.min(maxWidth, width);
     this.canvas.width = canvasWidth;
     this.canvas.height = canvasWidth * height / width;
+    this.canvas.style = 'width:100%;height:100%';
   }
 
   destroyfunction() {

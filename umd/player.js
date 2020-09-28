@@ -1052,7 +1052,9 @@
       className: "lm-player-plus",
       target: "_blank",
       href: playerDownloadUrl,
-      style: "pointer-events: all;",
+      style: {
+        pointerEvents: 'all'
+      },
       download: "ZVPlayer.exe",
       rel: "noopener noreferrer"
     }, "\u4E0B\u8F7D") : null);
@@ -2642,6 +2644,7 @@
       let canvasWidth = Math.min(maxWidth, width);
       this.canvas.width = canvasWidth;
       this.canvas.height = canvasWidth * height / width;
+      this.canvas.style = 'width:100%;height:100%';
     }
 
     destroyfunction() {
