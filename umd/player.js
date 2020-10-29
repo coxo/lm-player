@@ -2802,7 +2802,9 @@
 
     _createScoket() {
       const _SOCKET_URL = this.SOCKET_URL;
-      const _STREAM_URL = this.STREAM_URL;
+
+      const _STREAM_URL = this.STREAM_URL || '';
+
       const RATE = this.RATIO;
       let that = this;
 
@@ -2817,7 +2819,7 @@
       this.websocket.onCommand = this._onCommand.bind(this); // 初始化成功后，开始发送拉流地址
 
       this.websocket.onOpen = function () {
-        this.websocket.send('{"commond":"url","url":"' + _STREAM_URL + '", "rate":"' + RATE + '"}');
+        this.websocket.send(`{"commond":"url","url":"${_STREAM_URL}", "rate":"${RATE}"}`);
       }.bind(this); // 连接成功后，发送信令，开始视频拉流
 
 
@@ -2916,7 +2918,11 @@
     // 1：h264不用插件，其它用插件
     // 2：全用插件
 
-    const VD_RUN_STATE = config && config.mode || Number(localStorage.getItem('VD_RUN_STATE') || 0); // 是否插件播放
+    const strS = localStorage.getItem('PY_PLUS');
+    const playerOptions = JSON.parse(strS);
+    const VD_RUN_STATE = config && config.mode || Number(playerOptions.mode || 0); // 是否解密
+
+    const VD_RUN_DEC = playerOptions.decryptionMode; // 是否插件播放
 
     const [isPlus, setPlus] = React.useState(VD_RUN_STATE === 2 ? true : false);
     const [yuvUrl, setYuvUrl] = React.useState(null);
@@ -3007,9 +3013,14 @@
         playContainer: playContainerRef.current,
         video: playContainerRef.current.querySelector('video')
       };
-      setYuvUrl(file);
+
+      if (file) {
+        // 是否解密
+        setYuvUrl(file + (VD_RUN_DEC || ''));
+      }
 
       if (!file) {
+        setYuvUrl('');
         onClose();
         return;
       } // 1：h264不用插件，其它用插件

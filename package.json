@@ -1,6 +1,6 @@
 {
   "name": "lz-player",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "description": "video for html5 support flv m3u8",
   "repository": {
     "type": "git",

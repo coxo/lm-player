@@ -643,7 +643,7 @@ class YUVPlayer extends React.Component {
 
   _createScoket() {
     const _SOCKET_URL = this.SOCKET_URL;
-    const _STREAM_URL = this.STREAM_URL;
+    const _STREAM_URL = this.STREAM_URL || '';
     const RATE = this.RATIO;
     let that = this;
 
@@ -658,7 +658,7 @@ class YUVPlayer extends React.Component {
     this.websocket.onCommand = this._onCommand.bind(this); // 初始化成功后，开始发送拉流地址
 
     this.websocket.onOpen = function () {
-      this.websocket.send('{"commond":"url","url":"' + _STREAM_URL + '", "rate":"' + RATE + '"}');
+      this.websocket.send(`{"commond":"url","url":"${_STREAM_URL}", "rate":"${RATE}"}`);
     }.bind(this); // 连接成功后，发送信令，开始视频拉流
 
 

@@ -33,7 +33,15 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
   // 0：不用插件
   // 1：h264不用插件，其它用插件
   // 2：全用插件
-  const VD_RUN_STATE = (config && config.mode) || Number(localStorage.getItem('VD_RUN_STATE') || 0)
+
+  const strS = localStorage.getItem('PY_PLUS')
+
+  const playerOptions = JSON.parse(strS);
+  
+  const VD_RUN_STATE = (config && config.mode) || Number(playerOptions.mode || 0)
+  // 是否解密
+  const VD_RUN_DEC = playerOptions.decryptionMode
+
   // 是否插件播放
   const [isPlus, setPlus] = useState(VD_RUN_STATE=== 2 ? true : false)
 
@@ -130,9 +138,13 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
       video: playContainerRef.current.querySelector('video')
     }
 
-    setYuvUrl(file)
+    if(file){
+      // 是否解密
+      setYuvUrl(file + (VD_RUN_DEC || ''))
+    }
 
     if (!file) {
+      setYuvUrl('')
       onClose()
       return
     }
