@@ -38,20 +38,6 @@ function VideoMessage({ event, api }) {
     event.on(EventName.RELOAD, reload)
     event.on(EventName.HISTORY_PLAY_END, playEnd)
     event.on(EventName.CLEAR_ERROR_TIMER, reloadSuccess)
-
-    // return () => {
-    //   event.removeEventListener('loadstart', openLoading)
-    //   event.removeEventListener('waiting', openLoading)
-    //   event.removeEventListener('seeking', openLoading)
-    //   event.removeEventListener('loadeddata', closeLoading)
-    //   event.removeEventListener('canplay', closeLoading)
-    //   event.off(EventName.ERROR_RELOAD, errorReload)
-    //   event.off(EventName.RELOAD_FAIL, reloadFail)
-    //   event.off(EventName.RELOAD_SUCCESS, reloadSuccess)
-    //   event.off(EventName.RELOAD, reload)
-    //   event.off(EventName.HISTORY_PLAY_END, playEnd)
-    //   event.off(EventName.CLEAR_ERROR_TIMER, reloadSuccess)
-    // }
   }, [event])
 
   const { loading, status } = state
@@ -67,8 +53,9 @@ function VideoMessage({ event, api }) {
 }
 
 
-export const YUVMessage = ({ event, api, playerState}) => {
-  const [state, setState] = useState({ status: null, errorTimer: null, loading: false })
+export const YUVMessage = ({playerState}) => {
+  const [state, setState] = useState({ status: null, msg: '', errorTimer: null, loading: false })
+  const [messageTips, setMessageTips] = useState('')
 
   const message = useMemo(() => {
 
@@ -79,34 +66,46 @@ export const YUVMessage = ({ event, api, playerState}) => {
       return '视频错误'
     }
     if (state.status === 'reload') {
-      return `视频加载错误，正在进行重连${state.errorTimer}s...`
+      return `视频加载错误，正在进行重连${state.errorTimer}...`
     }
     if (state.status === 'connet') {
-      return `未安装播放插件`
+      return `抱歉,连接失败,请安装播放软件!`
     }
   }, [state.errorTimer, state.status])
 
   useEffect(() => {
-    let numFlag = null
-    if(playerState == 0){
-      setState({ status: null, errorTimer: null, loading: true })
-    }else if(playerState == 1){
+    setMessageTips('')
+    if(playerState.code == 70004){
+      // 关闭
       setState({ status: null, errorTimer: null, loading: false })
-    }else if(playerState == 2){
-      let errorTimer = 1;
-      numFlag = setInterval(()=>{
-        setState({ status: 'reload', errorTimer: ++errorTimer, loading: false })
-      },1000)
-    }else if(playerState == 3){
-      setState({ status: 'fail', errorTimer: null, loading: false })
-    }else if(playerState == 4){
-      setState({ status: null, errorTimer: null, loading: false })
-    }else if(playerState == 5){
+    }
+
+    if(playerState.code == 1000){
+      // 重新连接
       setState({ status: 'connet', errorTimer: null, loading: false })
     }
 
-    return () => {
-      clearInterval(numFlag)
+    // 默认状态-开始loading...
+    if(playerState.code == 70000){
+      setState({ status: null, errorTimer: null, loading: true })
+    }
+    
+    if(playerState.code == 70001){
+      // 开始播放--消除loading...
+      setState({ status: null, errorTimer: null, loading: false })
+    }
+
+    // 业务状态.....
+    
+    // 视频流播放异常-进行重装
+    if(playerState.code == 70002){
+      setState({ status: 'reload', errorTimer: playerState.errorTimer, loading: false })
+    }
+
+    // 视频流播放异常-显示
+    if(playerState.code > 710000){
+      setMessageTips('错误信息: ' + playerState.msg)
+      setState({ status: 'fail', errorTimer: null, loading: false })
     }
 
   },[playerState])
@@ -139,6 +138,7 @@ export const YUVMessage = ({ event, api, playerState}) => {
       }
       
       <span className="lm-player-message">{message}</span>
+      <span style={{ fontSize: 12, color: '#333' }}>{messageTips}</span>
 
       {
         status === 'connet' ? 

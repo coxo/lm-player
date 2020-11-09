@@ -266,7 +266,7 @@ class WebSocketController {
     this._status = ControllerStatus.kError;
     let info = {
       code: e.code || 1000,
-      msg: e.message || '插件未连接，请运行插件！'
+      msg: e.message || '未检测到播放插件，请运行插件！'
     };
 
     if (this._onError) {
@@ -513,8 +513,7 @@ class YUVPlayer extends React.Component {
     this.RATIO = ratio;
     this.errorTimer = 0;
     this.reloadTimer = null;
-    this.errorFlag = 1;
-    this.setPlayerState(0);
+    this.setPlayerState({ code: 70000, msg: ''});
   }
 
   setPlayerState(state) {
@@ -550,7 +549,7 @@ class YUVPlayer extends React.Component {
 
   closeWebSocket() {
     if (this.websocket) {
-      this.setPlayerState(4);
+      this.setPlayerState({code: 70004, msg: ''});
       this.websocket.destroy();
       this.websocket = null;
     }
@@ -563,35 +562,28 @@ class YUVPlayer extends React.Component {
 
   _onError(e, info) {
     this.websocket = null;
-    this.setPlayerState(2);
-    this.errorTimer = this.errorTimer + 1;
-    const that = this;
+    const errorReloadTimer = this.props.errorReloadTimer;
     console.error(e, info);
 
-    if (this.errorTimer < 4 && this.errorFlag == 1) {
+    // 判断socket是否连接
+    if (info && info.code == 1000) {
+      this.setPlayerState(info);
+      return
+    } 
+    this.errorTimer = this.errorTimer + 1;
+
+    // 开始loading...
+    this.setPlayerState({code: 70002, msg: '', errorTimer: this.errorTimer});
+    const that = this;
+
+    if (this.errorTimer < errorReloadTimer + 1) {
       this.reloadTimer = setTimeout(() => {
         console.warn(`视频播放出错，正在进行重连${that.errorTimer}`);
-
         that._createScoket();
       }, 2 * 1000);
-    }
-
-    if (this.errorTimer == 4 && this.errorFlag == 1) {
-      this.setPlayerState(3);
-    }
-
-    if (info && info.code == 1000) {
-      this.setPlayerState(5);
-    } // 地址错误无法取流
-
-
-    if (e.code == 710044) {
-      this.setPlayerState(3);
-    }
-
-    if (e.code == 710047) {
-      this.errorFlag = 0;
-      this.setPlayerState(3);
+    }else{
+      // 显示出错-停止重新拉起加载
+      this.setPlayerState(e);
     }
   }
 
@@ -602,25 +594,11 @@ class YUVPlayer extends React.Component {
     this.loadYuv(ratioWidth, ratioHeight, event.data);
   }
 
-  loadRGB(canvas, ratioWidth, ratioHeight, data) {
-    var canvasContext = canvas.getContext("2d");
-    var imgdata = canvasContext.createImageData(ratioHeight, ratioWidth);
-    var imgdatalen = imgdata.data.length;
-
-    for (var i = 0; i < imgdatalen; i += 4) {
-      imgdata.data[i + 0] = 0;
-      imgdata.data[i + 1] = 255;
-      imgdata.data[i + 2] = 0;
-      imgdata.data[i + 3] = 255;
-    }
-
-    canvasContext.putImageData(imgdata, 0, 0);
-  }
-
   loadYuv(ratioWidth, ratioHeight, data) {
     this.player.renderFrame(ratioWidth, ratioHeight, new Uint8Array(data, 4));
   }
 
+  // 获取视频流-前四个字节-分辨率
   getRatioNumber(barrayData, byteRange) {
     const offset1 = byteRange[0];
     const offset2 = byteRange[1];
@@ -636,7 +614,8 @@ class YUVPlayer extends React.Component {
     });
     let rateArr = this.RATIO.split('*');
     this.player.setSizefunction(rateArr[0], rateArr[1], 1920);
-    this.setPlayerState(1);
+    // 开始播放,清除loading
+    this.setPlayerState({code: 70001, msg: ''});
     this.errorTimer = 0;
     clearTimeout(this.reloadTimer);
   }
@@ -646,6 +625,7 @@ class YUVPlayer extends React.Component {
     const _STREAM_URL = this.STREAM_URL || '';
     const RATE = this.RATIO;
     let that = this;
+    const tokenId = this.props.token;
 
     if (!WebSocketController.isSupported()) {
       return;
@@ -656,12 +636,15 @@ class YUVPlayer extends React.Component {
     this.websocket.onComplete = this._onComplete.bind(this);
     this.websocket.onError = this._onError.bind(this);
     this.websocket.onCommand = this._onCommand.bind(this); // 初始化成功后，开始发送拉流地址
-
+    let tokenStr = ''
+    if(tokenId){
+      tokenStr = `, "token":"${tokenId}"`
+    }
     this.websocket.onOpen = function () {
-      this.websocket.send(`{"commond":"url","url":"${_STREAM_URL}", "rate":"${RATE}"}`);
-    }.bind(this); // 连接成功后，发送信令，开始视频拉流
+      this.websocket.send(`{"commond":"url","url":"${_STREAM_URL}", "rate":"${RATE}"${tokenStr}}`);
+    }.bind(this); 
 
-
+    // 连接成功后，发送信令，开始视频拉流
     this.websocket.onSuccess = function (e) {
       if (e.msg === 'succeed') {
         that.startPalyer();

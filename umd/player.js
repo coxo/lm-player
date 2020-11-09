@@ -1,13 +1,13 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('react'), require('flv.zv.js'), require('hls.js'), require('prop-types'), require('react-dom')) :
-  typeof define === 'function' && define.amd ? define(['exports', 'react', 'flv.zv.js', 'hls.js', 'prop-types', 'react-dom'], factory) :
-  (global = global || self, factory(global.LMPlayer = {}, global.React, global.flvjs, global.Hls, global.PropTypes, global.ReactDOM));
-}(this, (function (exports, React, flvjs, Hls, PropTypes, ReactDOM) { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('react'), require('prop-types'), require('react-dom'), require('flv.zv.js'), require('hls.js')) :
+  typeof define === 'function' && define.amd ? define(['exports', 'react', 'prop-types', 'react-dom', 'flv.zv.js', 'hls.js'], factory) :
+  (global = global || self, factory(global.LMPlayer = {}, global.React, global.PropTypes, global.ReactDOM, global.flvjs, global.Hls));
+}(this, (function (exports, React, PropTypes, ReactDOM, flvjs, Hls) { 'use strict';
 
   var React__default = 'default' in React ? React['default'] : React;
-  flvjs = flvjs && Object.prototype.hasOwnProperty.call(flvjs, 'default') ? flvjs['default'] : flvjs;
   PropTypes = PropTypes && Object.prototype.hasOwnProperty.call(PropTypes, 'default') ? PropTypes['default'] : PropTypes;
   ReactDOM = ReactDOM && Object.prototype.hasOwnProperty.call(ReactDOM, 'default') ? ReactDOM['default'] : ReactDOM;
+  flvjs = flvjs && Object.prototype.hasOwnProperty.call(flvjs, 'default') ? flvjs['default'] : flvjs;
 
   class VideoEventInstance {
     constructor(video) {
@@ -81,194 +81,6 @@
       this.events = {};
     }
 
-  }
-
-  /**
-   * 创建HLS对象
-   * @param {*} video
-   * @param {*} file
-   */
-
-  function createHlsPlayer(video, file) {
-    if (Hls.isSupported()) {
-      const player = new Hls({
-        liveDurationInfinity: true,
-        levelLoadingTimeOut: 15000,
-        fragLoadingTimeOut: 25000,
-        enableWorker: true
-      });
-      player.loadSource(file);
-      player.attachMedia(video);
-      return player;
-    }
-  }
-  /**
-   * 创建FLV对象
-   * @param {*} video
-   * @param {*} options
-   */
-
-  function createFlvPlayer(video, options) {
-    const {
-      flvOptions = {},
-      flvConfig = {}
-    } = options;
-
-    if (flvjs.isSupported()) {
-      const player = flvjs.createPlayer(Object.assign({}, flvOptions, {
-        type: 'flv',
-        url: options.file
-      }), Object.assign({}, flvConfig, {
-        enableWorker: true,
-        // lazyLoad: false,
-        // Indicates how many seconds of data to be kept for lazyLoad.
-        // lazyLoadMaxDuration: 0,
-        // autoCleanupMaxBackwardDuration: 3,
-        // autoCleanupMinBackwardDuration: 2,
-        // autoCleanupSourceBuffer: true,
-        enableStashBuffer: false,
-        stashInitialSize: 128,
-        isLive: options.isLive || true
-      }));
-      player.attachMediaElement(video);
-      player.load();
-      return player;
-    }
-  }
-  /**
-   * 获取播放文件类型
-   * @param {*} url
-   */
-
-  function getVideoType(url) {
-    return url.indexOf('.flv') > -1 ? 'flv' : url.indexOf('.m3u8') > -1 ? 'm3u8' : 'native';
-  }
-  /**
-   * 日期格式化
-   * @param {*} timetemp
-   */
-
-  function dateFormat(timetemp) {
-    const date = new Date(timetemp);
-    let YYYY = date.getFullYear();
-    let DD = date.getDate();
-    let MM = date.getMonth() + 1;
-    let hh = date.getHours();
-    let mm = date.getMinutes();
-    let ss = date.getSeconds();
-    return `${YYYY}.${MM > 9 ? MM : '0' + MM}.${DD > 9 ? DD : '0' + DD} ${hh > 9 ? hh : '0' + hh}.${mm > 9 ? mm : '0' + mm}.${ss > 9 ? ss : '0' + ss}`;
-  }
-  /**
-   * 全屏
-   * @param {*} element
-   */
-
-  function fullscreen(element) {
-    if (element.requestFullScreen) {
-      element.requestFullScreen();
-    } else if (element.webkitRequestFullScreen) {
-      element.webkitRequestFullScreen();
-    } else if (element.mozRequestFullScreen) {
-      element.mozRequestFullScreen();
-    } else if (element.msRequestFullscreen) {
-      element.msRequestFullscreen();
-    }
-  }
-  /**
-   * exitFullscreen 退出全屏
-   * @param  {Objct} element 选择器
-   */
-
-  function exitFullscreen() {
-    if (document.exitFullscreen) {
-      document.exitFullscreen();
-    } else if (document.mozCancelFullScreen) {
-      document.mozCancelFullScreen();
-    } else if (document.webkitExitFullscreen) {
-      document.webkitExitFullscreen();
-    } else if (document.msExitFullscreen) {
-      document.msExitFullscreen();
-    }
-  }
-  /**
-   * [isFullscreen 判断浏览器是否全屏]
-   * @return [全屏则返回当前调用全屏的元素,不全屏返回false]
-   */
-
-  function isFullscreen(ele) {
-    if (!ele) {
-      return false;
-    }
-
-    return document.fullscreenElement === ele || document.msFullscreenElement === ele || document.mozFullScreenElement === ele || document.webkitFullscreenElement === ele || false;
-  } // 添加 / 移除 全屏事件监听
-
-  function fullScreenListener(isAdd, fullscreenchange) {
-    const funcName = isAdd ? 'addEventListener' : 'removeEventListener';
-    const fullScreenEvents = ['fullscreenchange', 'mozfullscreenchange', 'webkitfullscreenchange', 'msfullscreenchange'];
-    fullScreenEvents.map(v => document[funcName](v, fullscreenchange));
-  }
-  /**
-   * 计算视频拖拽边界
-   * @param {*} ele
-   * @param {*} currentPosition
-   * @param {*} scale
-   */
-
-  function computedBound(ele, currentPosition, scale) {
-    const data = currentPosition;
-    const eleRect = ele.getBoundingClientRect();
-    const w = eleRect.width;
-    const h = eleRect.height;
-    let lx = 0,
-        ly = 0;
-
-    if (scale === 1) {
-      return [0, 0];
-    }
-
-    lx = w * (scale - 1) / 2 / scale;
-    ly = h * (scale - 1) / 2 / scale;
-    let x = 0,
-        y = 0;
-
-    if (data[0] >= 0 && data[0] > lx) {
-      x = lx;
-    }
-
-    if (data[0] >= 0 && data[0] < lx) {
-      x = data[0];
-    }
-
-    if (data[0] < 0 && data[0] < -lx) {
-      x = -lx;
-    }
-
-    if (data[0] < 0 && data[0] > -lx) {
-      x = data[0];
-    }
-
-    if (data[1] >= 0 && data[1] > ly) {
-      y = ly;
-    }
-
-    if (data[1] >= 0 && data[1] < ly) {
-      y = data[1];
-    }
-
-    if (data[1] < 0 && data[1] < -ly) {
-      y = -ly;
-    }
-
-    if (data[1] < 0 && data[1] > -ly) {
-      y = data[1];
-    }
-
-    if (x !== data[0] || y !== data[1]) {
-      return [x, y];
-    } else {
-      return;
-    }
   }
 
   function _extends() {
@@ -686,6 +498,194 @@
     isHistory: PropTypes.bool
   };
 
+  /**
+   * 创建HLS对象
+   * @param {*} video
+   * @param {*} file
+   */
+
+  function createHlsPlayer(video, file) {
+    if (Hls.isSupported()) {
+      const player = new Hls({
+        liveDurationInfinity: true,
+        levelLoadingTimeOut: 15000,
+        fragLoadingTimeOut: 25000,
+        enableWorker: true
+      });
+      player.loadSource(file);
+      player.attachMedia(video);
+      return player;
+    }
+  }
+  /**
+   * 创建FLV对象
+   * @param {*} video
+   * @param {*} options
+   */
+
+  function createFlvPlayer(video, options) {
+    const {
+      flvOptions = {},
+      flvConfig = {}
+    } = options;
+
+    if (flvjs.isSupported()) {
+      const player = flvjs.createPlayer(Object.assign({}, flvOptions, {
+        type: 'flv',
+        url: options.file
+      }), Object.assign({}, flvConfig, {
+        enableWorker: true,
+        // lazyLoad: false,
+        // Indicates how many seconds of data to be kept for lazyLoad.
+        // lazyLoadMaxDuration: 0,
+        // autoCleanupMaxBackwardDuration: 3,
+        // autoCleanupMinBackwardDuration: 2,
+        // autoCleanupSourceBuffer: true,
+        enableStashBuffer: false,
+        stashInitialSize: 128,
+        isLive: options.isLive || true
+      }));
+      player.attachMediaElement(video);
+      player.load();
+      return player;
+    }
+  }
+  /**
+   * 获取播放文件类型
+   * @param {*} url
+   */
+
+  function getVideoType(url) {
+    return url.indexOf('.flv') > -1 ? 'flv' : url.indexOf('.m3u8') > -1 ? 'm3u8' : 'native';
+  }
+  /**
+   * 日期格式化
+   * @param {*} timetemp
+   */
+
+  function dateFormat(timetemp) {
+    const date = new Date(timetemp);
+    let YYYY = date.getFullYear();
+    let DD = date.getDate();
+    let MM = date.getMonth() + 1;
+    let hh = date.getHours();
+    let mm = date.getMinutes();
+    let ss = date.getSeconds();
+    return `${YYYY}.${MM > 9 ? MM : '0' + MM}.${DD > 9 ? DD : '0' + DD} ${hh > 9 ? hh : '0' + hh}.${mm > 9 ? mm : '0' + mm}.${ss > 9 ? ss : '0' + ss}`;
+  }
+  /**
+   * 全屏
+   * @param {*} element
+   */
+
+  function fullscreen(element) {
+    if (element.requestFullScreen) {
+      element.requestFullScreen();
+    } else if (element.webkitRequestFullScreen) {
+      element.webkitRequestFullScreen();
+    } else if (element.mozRequestFullScreen) {
+      element.mozRequestFullScreen();
+    } else if (element.msRequestFullscreen) {
+      element.msRequestFullscreen();
+    }
+  }
+  /**
+   * exitFullscreen 退出全屏
+   * @param  {Objct} element 选择器
+   */
+
+  function exitFullscreen() {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+  }
+  /**
+   * [isFullscreen 判断浏览器是否全屏]
+   * @return [全屏则返回当前调用全屏的元素,不全屏返回false]
+   */
+
+  function isFullscreen(ele) {
+    if (!ele) {
+      return false;
+    }
+
+    return document.fullscreenElement === ele || document.msFullscreenElement === ele || document.mozFullScreenElement === ele || document.webkitFullscreenElement === ele || false;
+  } // 添加 / 移除 全屏事件监听
+
+  function fullScreenListener(isAdd, fullscreenchange) {
+    const funcName = isAdd ? 'addEventListener' : 'removeEventListener';
+    const fullScreenEvents = ['fullscreenchange', 'mozfullscreenchange', 'webkitfullscreenchange', 'msfullscreenchange'];
+    fullScreenEvents.map(v => document[funcName](v, fullscreenchange));
+  }
+  /**
+   * 计算视频拖拽边界
+   * @param {*} ele
+   * @param {*} currentPosition
+   * @param {*} scale
+   */
+
+  function computedBound(ele, currentPosition, scale) {
+    const data = currentPosition;
+    const eleRect = ele.getBoundingClientRect();
+    const w = eleRect.width;
+    const h = eleRect.height;
+    let lx = 0,
+        ly = 0;
+
+    if (scale === 1) {
+      return [0, 0];
+    }
+
+    lx = w * (scale - 1) / 2 / scale;
+    ly = h * (scale - 1) / 2 / scale;
+    let x = 0,
+        y = 0;
+
+    if (data[0] >= 0 && data[0] > lx) {
+      x = lx;
+    }
+
+    if (data[0] >= 0 && data[0] < lx) {
+      x = data[0];
+    }
+
+    if (data[0] < 0 && data[0] < -lx) {
+      x = -lx;
+    }
+
+    if (data[0] < 0 && data[0] > -lx) {
+      x = data[0];
+    }
+
+    if (data[1] >= 0 && data[1] > ly) {
+      y = ly;
+    }
+
+    if (data[1] >= 0 && data[1] < ly) {
+      y = data[1];
+    }
+
+    if (data[1] < 0 && data[1] < -ly) {
+      y = -ly;
+    }
+
+    if (data[1] < 0 && data[1] > -ly) {
+      y = data[1];
+    }
+
+    if (x !== data[0] || y !== data[1]) {
+      return [x, y];
+    } else {
+      return;
+    }
+  }
+
   function RightBar({
     playContainer,
     api,
@@ -927,19 +927,7 @@
       event.on(EventName.RELOAD_SUCCESS, reloadSuccess);
       event.on(EventName.RELOAD, reload);
       event.on(EventName.HISTORY_PLAY_END, playEnd);
-      event.on(EventName.CLEAR_ERROR_TIMER, reloadSuccess); // return () => {
-      //   event.removeEventListener('loadstart', openLoading)
-      //   event.removeEventListener('waiting', openLoading)
-      //   event.removeEventListener('seeking', openLoading)
-      //   event.removeEventListener('loadeddata', closeLoading)
-      //   event.removeEventListener('canplay', closeLoading)
-      //   event.off(EventName.ERROR_RELOAD, errorReload)
-      //   event.off(EventName.RELOAD_FAIL, reloadFail)
-      //   event.off(EventName.RELOAD_SUCCESS, reloadSuccess)
-      //   event.off(EventName.RELOAD, reload)
-      //   event.off(EventName.HISTORY_PLAY_END, playEnd)
-      //   event.off(EventName.CLEAR_ERROR_TIMER, reloadSuccess)
-      // }
+      event.on(EventName.CLEAR_ERROR_TIMER, reloadSuccess);
     }, [event]);
     const {
       loading,
@@ -956,15 +944,15 @@
   }
 
   const YUVMessage = ({
-    event,
-    api,
     playerState
   }) => {
     const [state, setState] = React.useState({
       status: null,
+      msg: '',
       errorTimer: null,
       loading: false
     });
+    const [messageTips, setMessageTips] = React.useState('');
     const message = React.useMemo(() => {
       if (!state.status) {
         return '';
@@ -975,60 +963,71 @@
       }
 
       if (state.status === 'reload') {
-        return `视频加载错误，正在进行重连${state.errorTimer}s...`;
+        return `视频加载错误，正在进行重连${state.errorTimer}...`;
       }
 
       if (state.status === 'connet') {
-        return `未安装播放插件`;
+        return `抱歉,连接失败,请安装播放软件!`;
       }
     }, [state.errorTimer, state.status]);
     React.useEffect(() => {
-      let numFlag = null;
+      setMessageTips('');
 
-      if (playerState == 0) {
-        setState({
-          status: null,
-          errorTimer: null,
-          loading: true
-        });
-      } else if (playerState == 1) {
+      if (playerState.code == 70004) {
+        // 关闭
         setState({
           status: null,
           errorTimer: null,
           loading: false
         });
-      } else if (playerState == 2) {
-        let errorTimer = 1;
-        numFlag = setInterval(() => {
-          setState({
-            status: 'reload',
-            errorTimer: ++errorTimer,
-            loading: false
-          });
-        }, 1000);
-      } else if (playerState == 3) {
-        setState({
-          status: 'fail',
-          errorTimer: null,
-          loading: false
-        });
-      } else if (playerState == 4) {
-        setState({
-          status: null,
-          errorTimer: null,
-          loading: false
-        });
-      } else if (playerState == 5) {
+      }
+
+      if (playerState.code == 1000) {
+        // 重新连接
         setState({
           status: 'connet',
           errorTimer: null,
           loading: false
         });
+      } // 默认状态-开始loading...
+
+
+      if (playerState.code == 70000) {
+        setState({
+          status: null,
+          errorTimer: null,
+          loading: true
+        });
       }
 
-      return () => {
-        clearInterval(numFlag);
-      };
+      if (playerState.code == 70001) {
+        // 开始播放--消除loading...
+        setState({
+          status: null,
+          errorTimer: null,
+          loading: false
+        });
+      } // 业务状态.....
+      // 视频流播放异常-进行重装
+
+
+      if (playerState.code == 70002) {
+        setState({
+          status: 'reload',
+          errorTimer: playerState.errorTimer,
+          loading: false
+        });
+      } // 视频流播放异常-显示
+
+
+      if (playerState.code > 710000) {
+        setMessageTips('错误信息: ' + playerState.msg);
+        setState({
+          status: 'fail',
+          errorTimer: null,
+          loading: false
+        });
+      }
     }, [playerState]);
     const {
       loading,
@@ -1048,7 +1047,12 @@
       className: `lm-player-loading-animation lm-player-loading-icon`
     }) : null, /*#__PURE__*/React__default.createElement("span", {
       className: "lm-player-message"
-    }, message), status === 'connet' ? /*#__PURE__*/React__default.createElement("a", {
+    }, message), /*#__PURE__*/React__default.createElement("span", {
+      style: {
+        fontSize: 12,
+        color: '#333'
+      }
+    }, messageTips), status === 'connet' ? /*#__PURE__*/React__default.createElement("a", {
       className: "lm-player-plus",
       target: "_blank",
       href: playerDownloadUrl,
@@ -1388,373 +1392,6 @@
     playContainer: PropTypes.node,
     playerProps: PropTypes.object
   };
-
-  let index = 0;
-  class Api {
-    constructor({
-      video,
-      playContainer,
-      event,
-      flv,
-      hls,
-      isPlus
-    }) {
-      this.player = video;
-      this.playContainer = playContainer;
-      this.flv = flv;
-      this.hls = hls;
-      this.event = event;
-      this.scale = 1;
-      this.position = [0, 0];
-      this.isPlus = isPlus;
-    }
-    /**
-     * 播放器销毁后 动态跟新api下的flv，hls对象
-     * @param {*} param0
-     */
-
-
-    updateChunk({
-      flv,
-      hls
-    }) {
-      this.flv = flv;
-      this.hls = hls;
-    }
-    /**
-     * 全屏
-     */
-
-
-    requestFullScreen() {
-      if (!isFullscreen$1(this.playContainer)) {
-        fullscreen$1(this.playContainer);
-      }
-    }
-    /**
-     * 退出全屏
-     */
-
-
-    cancelFullScreen() {
-      if (isFullscreen$1(this.playContainer)) {
-        exitFullscreen$1();
-      }
-    }
-
-    play() {
-      if (this.player.paused) {
-        this.player.play();
-      }
-    }
-
-    pause() {
-      if (!this.player.paused) {
-        this.player.pause();
-      }
-    }
-
-    destroy() {
-      this.player.removeAttribute('src');
-      this.unload();
-
-      if (this.flv) {
-        index++;
-        this.flv.destroy();
-      }
-
-      if (this.hls) {
-        index++;
-        this.hls.destroy();
-      }
-
-      this.player = null;
-      this.playContainer = null;
-      this.flv = null;
-      this.hls = null;
-      this.event = null;
-      this.scale = null;
-      this.position = null;
-      console.warn('destroy', index);
-    }
-    /**
-     * 设置currentTime实现seek
-     * @param {*} seconds
-     * @param {*} noEmit
-     */
-
-
-    seekTo(seconds, noEmit) {
-      const buffered = this.getBufferedTime();
-
-      if (this.flv && buffered[0] > seconds) {
-        this.flv.unload();
-        this.flv.load();
-      }
-
-      console.log(this.player);
-
-      if (this.player) {
-        console.log(this.player.currentTime);
-        this.player.currentTime = seconds;
-
-        if (!noEmit) {
-          this.event.emit(EventName.SEEK, seconds);
-        }
-      }
-    }
-    /**
-     * 视频重载
-     */
-
-
-    reload(notEmit) {
-      if (this.getCurrentTime !== 0) {
-        this.seekTo(0);
-      }
-
-      if (this.hls) {
-        this.hls.swapAudioCodec();
-        this.hls.recoverMediaError();
-      }
-
-      this.unload();
-      this.load();
-      !notEmit && this.event.emit(EventName.RELOAD);
-    }
-
-    unload() {
-      this.flv && this.flv.unload();
-      this.hls && this.hls.stopLoad();
-    }
-
-    load() {
-      if (this.flv) {
-        this.flv.load();
-      }
-
-      if (this.hls) {
-        this.hls.startLoad();
-        this.hls.loadSource(this.hls.url);
-      }
-    }
-
-    setVolume(fraction) {
-      this.player.volume = fraction;
-    }
-
-    mute() {
-      this.player.muted = true;
-    }
-
-    unmute() {
-      this.player.muted = false;
-    }
-    /**
-     * 开启画中画功能
-     */
-
-
-    requestPictureInPicture() {
-      if (this.player.requestPictureInPicture && document.pictureInPictureElement !== this.player) {
-        this.player.requestPictureInPicture();
-      }
-    }
-    /**
-     * 关闭画中画功能
-     */
-
-
-    exitPictureInPicture() {
-      if (document.exitPictureInPicture && document.pictureInPictureElement === this.player) {
-        document.exitPictureInPicture();
-      }
-    }
-    /**
-     * 设置播放速率
-     * @param {*} rate
-     */
-
-
-    setPlaybackRate(rate) {
-      this.player.playbackRate = rate;
-    }
-    /**
-     * 获取视频总时长
-     */
-
-
-    getDuration() {
-      if (!this.player) return null;
-      const {
-        duration,
-        seekable
-      } = this.player;
-
-      if (duration === Infinity && seekable.length > 0) {
-        return seekable.end(seekable.length - 1);
-      }
-
-      return duration;
-    }
-    /**
-     * 获取当前播放时间
-     */
-
-
-    getCurrentTime() {
-      if (!this.player) return null;
-      return this.player.currentTime;
-    }
-    /**
-     * 获取缓存时间
-     */
-
-
-    getSecondsLoaded() {
-      return this.getBufferedTime()[1];
-    }
-    /**
-     * 获取当前视频缓存的起止时间
-     */
-
-
-    getBufferedTime() {
-      if (!this.player) return [];
-      const {
-        buffered
-      } = this.player;
-
-      if (buffered.length === 0) {
-        return [0, 0];
-      }
-
-      const end = buffered.end(buffered.length - 1);
-      const start = buffered.start(buffered.length - 1);
-      const duration = this.getDuration();
-
-      if (end > duration) {
-        return duration;
-      }
-
-      return [start, end];
-    }
-    /**
-     * 快进通过seekTo方法实现
-     * @param {*} second
-     */
-
-
-    fastForward(second = 5) {
-      const duration = this.getDuration();
-      const currentTime = this.getCurrentTime();
-      const time = currentTime + second;
-      this.seekTo(time > duration - 1 ? duration - 1 : time);
-    }
-    /**
-     * 快退通过seekTo方法实现
-     * @param {*} second
-     */
-
-
-    backWind(second = 5) {
-      const currentTime = this.getCurrentTime();
-      const time = currentTime - second;
-      this.seekTo(time < 1 ? 1 : time);
-    }
-    /**
-     * 视频截屏方法
-     */
-
-
-    snapshot() {
-      let canvas = document.createElement('canvas');
-      let ctx = canvas.getContext('2d');
-      canvas.width = this.player.videoWidth;
-      canvas.height = this.player.videoHeight;
-      ctx.drawImage(this.player, 0, 0, canvas.width, canvas.height);
-      setTimeout(() => {
-        canvas.remove();
-        canvas = null;
-        ctx = null;
-      }, 200);
-      return canvas.toDataURL();
-    }
-
-    setScale(num, isRest = false) {
-      let scale = this.scale + num;
-
-      if (isRest) {
-        scale = num;
-      } else {
-        if (scale < 1) {
-          scale = 1;
-        }
-
-        if (scale > 3) {
-          scale = 3;
-        }
-      }
-
-      this.scale = scale;
-      this.player.style.transition = 'transform 0.3s';
-
-      this.__setTransform();
-
-      this.event.emit(EventName.TRANSFORM);
-      setTimeout(() => {
-        this.player.style.transition = 'unset';
-      }, 1000);
-    }
-
-    getScale() {
-      return this.scale;
-    }
-
-    setPosition(position, isAnimate) {
-      this.position = position;
-      this.player.style.transition = isAnimate ? 'transform 0.3s' : 'unset';
-
-      this.__setTransform();
-    }
-
-    getPosition() {
-      return this.position;
-    }
-
-    __setTransform() {
-      this.player.style.transform = `scale(${this.scale}) translate(${this.position[0]}px,${this.position[1]}px)`;
-    }
-
-    getApi() {
-      return {
-        play: this.play.bind(this),
-        reload: this.reload.bind(this),
-        pause: this.pause.bind(this),
-        seekTo: this.seekTo.bind(this),
-        setVolume: this.setVolume.bind(this),
-        mute: this.mute.bind(this),
-        unmute: this.unmute.bind(this),
-        requestPictureInPicture: this.requestPictureInPicture.bind(this),
-        exitPictureInPicture: this.exitPictureInPicture.bind(this),
-        setPlaybackRate: this.setPlaybackRate.bind(this),
-        destroy: this.destroy.bind(this),
-        getDuration: this.getDuration.bind(this),
-        getCurrentTime: this.getCurrentTime.bind(this),
-        getSecondsLoaded: this.getSecondsLoaded.bind(this),
-        getBufferedTime: this.getBufferedTime.bind(this),
-        fastForward: this.fastForward.bind(this),
-        backWind: this.backWind.bind(this),
-        snapshot: this.snapshot.bind(this),
-        requestFullScreen: this.requestFullScreen.bind(this),
-        cancelFullScreen: this.cancelFullScreen.bind(this),
-        __player: this.player,
-        flv: this.flv,
-        hls: this.hls
-      };
-    }
-
-  }
 
   class YUVApi {
     constructor({
@@ -2421,7 +2058,7 @@
       this._status = ControllerStatus.kError;
       let info = {
         code: e.code || 1000,
-        msg: e.message || '插件未连接，请运行插件！'
+        msg: e.message || '未检测到播放插件，请运行插件！'
       };
 
       if (this._onError) {
@@ -2672,8 +2309,10 @@
       this.RATIO = ratio;
       this.errorTimer = 0;
       this.reloadTimer = null;
-      this.errorFlag = 1;
-      this.setPlayerState(0);
+      this.setPlayerState({
+        code: 70000,
+        msg: ''
+      });
     }
 
     setPlayerState(state) {
@@ -2709,7 +2348,10 @@
 
     closeWebSocket() {
       if (this.websocket) {
-        this.setPlayerState(4);
+        this.setPlayerState({
+          code: 70004,
+          msg: ''
+        });
         this.websocket.destroy();
         this.websocket = null;
       }
@@ -2722,35 +2364,32 @@
 
     _onError(e, info) {
       this.websocket = null;
-      this.setPlayerState(2);
-      this.errorTimer = this.errorTimer + 1;
-      const that = this;
-      console.error(e, info);
+      const errorReloadTimer = this.props.errorReloadTimer;
+      console.error(e, info); // 判断socket是否连接
 
-      if (this.errorTimer < 4 && this.errorFlag == 1) {
+      if (info && info.code == 1000) {
+        this.setPlayerState(info);
+        return;
+      }
+
+      this.errorTimer = this.errorTimer + 1; // 开始loading...
+
+      this.setPlayerState({
+        code: 70002,
+        msg: '',
+        errorTimer: this.errorTimer
+      });
+      const that = this;
+
+      if (this.errorTimer < errorReloadTimer + 1) {
         this.reloadTimer = setTimeout(() => {
           console.warn(`视频播放出错，正在进行重连${that.errorTimer}`);
 
           that._createScoket();
         }, 2 * 1000);
-      }
-
-      if (this.errorTimer == 4 && this.errorFlag == 1) {
-        this.setPlayerState(3);
-      }
-
-      if (info && info.code == 1000) {
-        this.setPlayerState(5);
-      } // 地址错误无法取流
-
-
-      if (e.code == 710044) {
-        this.setPlayerState(3);
-      }
-
-      if (e.code == 710047) {
-        this.errorFlag = 0;
-        this.setPlayerState(3);
+      } else {
+        // 显示出错-停止重新拉起加载
+        this.setPlayerState(e);
       }
     }
 
@@ -2761,24 +2400,10 @@
       this.loadYuv(ratioWidth, ratioHeight, event.data);
     }
 
-    loadRGB(canvas, ratioWidth, ratioHeight, data) {
-      var canvasContext = canvas.getContext("2d");
-      var imgdata = canvasContext.createImageData(ratioHeight, ratioWidth);
-      var imgdatalen = imgdata.data.length;
-
-      for (var i = 0; i < imgdatalen; i += 4) {
-        imgdata.data[i + 0] = 0;
-        imgdata.data[i + 1] = 255;
-        imgdata.data[i + 2] = 0;
-        imgdata.data[i + 3] = 255;
-      }
-
-      canvasContext.putImageData(imgdata, 0, 0);
-    }
-
     loadYuv(ratioWidth, ratioHeight, data) {
       this.player.renderFrame(ratioWidth, ratioHeight, new Uint8Array(data, 4));
-    }
+    } // 获取视频流-前四个字节-分辨率
+
 
     getRatioNumber(barrayData, byteRange) {
       const offset1 = byteRange[0];
@@ -2794,8 +2419,12 @@
         preserveDrawingBuffer: false
       });
       let rateArr = this.RATIO.split('*');
-      this.player.setSizefunction(rateArr[0], rateArr[1], 1920);
-      this.setPlayerState(1);
+      this.player.setSizefunction(rateArr[0], rateArr[1], 1920); // 开始播放,清除loading
+
+      this.setPlayerState({
+        code: 70001,
+        msg: ''
+      });
       this.errorTimer = 0;
       clearTimeout(this.reloadTimer);
     }
@@ -2807,6 +2436,7 @@
 
       const RATE = this.RATIO;
       let that = this;
+      const tokenId = this.props.token;
 
       if (!WebSocketController.isSupported()) {
         return;
@@ -2818,8 +2448,14 @@
       this.websocket.onError = this._onError.bind(this);
       this.websocket.onCommand = this._onCommand.bind(this); // 初始化成功后，开始发送拉流地址
 
+      let tokenStr = '';
+
+      if (tokenId) {
+        tokenStr = `, "token":"${tokenId}"`;
+      }
+
       this.websocket.onOpen = function () {
-        this.websocket.send(`{"commond":"url","url":"${_STREAM_URL}", "rate":"${RATE}"}`);
+        this.websocket.send(`{"commond":"url","url":"${_STREAM_URL}", "rate":"${RATE}"${tokenStr}}`);
       }.bind(this); // 连接成功后，发送信令，开始视频拉流
 
 
@@ -2856,41 +2492,6 @@
 
   }
 
-  function SimplePlayer({
-    autoPlay,
-    muted,
-    poster,
-    playsinline,
-    loop,
-    preload
-  }) {
-    return /*#__PURE__*/React__default.createElement("video", {
-      autoPlay: autoPlay,
-      preload: preload,
-      muted: muted,
-      poster: poster,
-      controls: false,
-      playsInline: playsinline,
-      loop: loop
-    });
-  }
-
-  SimplePlayer.propTypes = {
-    muted: PropTypes.string,
-    autoPlay: PropTypes.bool,
-    playsInline: PropTypes.bool,
-    preload: PropTypes.string,
-    poster: PropTypes.string,
-    loop: PropTypes.bool
-  };
-  SimplePlayer.defaultProps = {
-    muted: 'muted',
-    autoPlay: true,
-    playsInline: false,
-    preload: 'auto',
-    loop: false
-  };
-
   function SinglePlayer({
     type,
     file,
@@ -2910,58 +2511,23 @@
     const playContainerRef = React.useRef(null);
     const YUVRef = React.useRef(null);
     const [playerObj, setPlayerObj] = React.useState(null);
-    const playerRef = React.useRef(null);
-    const [playerState, setPlayerState] = React.useState(0);
-    const rate = React.useMemo(() => getRate(screenNum), [screenNum]);
-    const DEMUX_MSG_EVENT = 'demux_msg'; // 播放运行模式
+    const [playerState, setPlayerState] = React.useState({
+      code: 70000,
+      msg: ''
+    });
+    const rate = React.useMemo(() => getRate(screenNum), [screenNum]); // 播放运行模式
     // 0：不用插件
     // 1：h264不用插件，其它用插件
     // 2：全用插件
 
     const strS = localStorage.getItem('PY_PLUS');
-    const playerOptions = JSON.parse(strS);
-    const VD_RUN_STATE = config && config.mode || Number(playerOptions.mode || 0); // 是否解密
+    const playerOptions = JSON.parse(strS); // 是否解密
 
-    const VD_RUN_DEC = playerOptions.decryptionMode; // 是否插件播放
-
-    const [isPlus, setPlus] = React.useState(VD_RUN_STATE === 2 ? true : false);
+    const VD_RUN_DEC = playerOptions.decryptionMode;
     const [yuvUrl, setYuvUrl] = React.useState(null);
-
-    function loadBrowserPlayer(playerObject, callback) {
-      const formartType = getVideoType(file);
-
-      if (formartType === 'flv' || type === 'flv') {
-        playerObject.flv = createFlvPlayer(playerObject.video, { ...props,
-          file
-        });
-        playerObject.flv.on(DEMUX_MSG_EVENT, state => {
-          callback && callback(state);
-        });
-      }
-
-      if (formartType === 'm3u8' || type === 'hls') {
-        playerObject.hls = createHlsPlayer(playerObject.video, file);
-      }
-
-      if (!['flv', 'm3u8'].includes(formartType) || type === 'native') {
-        playerObject.video.src = file;
-      }
-
-      playerObject.event = new VideoEventInstance(playerObject.video);
-      playerObject.api = new Api(playerObject);
-      playerRef.current = playerObject;
-      setPlayerObj(() => playerObject);
-
-      if (onInitPlayer) {
-        onInitPlayer(Object.assign({}, playerObject.api.getApi(), playerObject.event.getApi()));
-      }
-
-      return playerObject;
-    }
 
     function loadPlusPlayer(playerObject) {
       console.info('进入插件播放模式==>');
-      setPlus(true);
       playerObject.event = new VideoEventInstance(YUVRef.current.getDom());
       playerObject.player = YUVRef.current;
       playerObject.api = new YUVApi(playerObject);
@@ -2982,7 +2548,6 @@
 
     function getRate(screenNum) {
       if (screenNum == 1) {
-        // return '1920*1080'
         return '1280*720';
       } else if (screenNum == 4) {
         return '960*544';
@@ -2996,17 +2561,7 @@
     }
 
     React.useEffect(() => () => {
-      if (VD_RUN_STATE !== 2) {
-        if (playerRef.current && playerRef.current.event) {
-          playerRef.current.event.destroy();
-        }
-
-        if (playerRef.current && playerRef.current.api) {
-          playerRef.current.api.destroy();
-        }
-      } else {
-        onClose();
-      }
+      onClose();
     }, [file]);
     React.useEffect(() => {
       const playerObject = {
@@ -3023,44 +2578,23 @@
         setYuvUrl('');
         onClose();
         return;
-      } // 1：h264不用插件，其它用插件
-      // 2：全用插件
-      // 0：不用插件
+      } // 全用插件
 
 
-      if (VD_RUN_STATE === 1) {
-        loadBrowserPlayer(playerObject, state => {
-          if (state !== 7) {
-            playerObject.api.unload();
-            loadPlusPlayer(playerObject);
-          } else {
-            setPlus(false);
-          }
-        });
-      } else if (VD_RUN_STATE === 2) {
-        loadPlusPlayer(playerObject);
-      } else {
-        loadBrowserPlayer(playerObject);
-      }
+      loadPlusPlayer(playerObject);
     }, [file]);
     return /*#__PURE__*/React__default.createElement("div", {
       className: `lm-player-container ${className}`,
       ref: playContainerRef
     }, /*#__PURE__*/React__default.createElement("div", {
       className: "player-mask-layout"
-    }, isPlus ? /*#__PURE__*/React__default.createElement(YUVPlayer, {
+    }, /*#__PURE__*/React__default.createElement(YUVPlayer, {
       streamUrl: yuvUrl,
       ratio: rate,
       ref: YUVRef,
-      onPlayerState: onPlayerState
-    }) : /*#__PURE__*/React__default.createElement(SimplePlayer, {
-      autoPlay: autoPlay,
-      preload: preload,
-      muted: muted,
-      poster: poster,
-      controls: false,
-      playsInline: playsinline,
-      loop: loop
+      token: props.uuid,
+      onPlayerState: onPlayerState,
+      errorReloadTimer: props.errorReloadTimer
     })), /*#__PURE__*/React__default.createElement(VideoTools, {
       playerObj: playerObj,
       isLive: props.isLive,
@@ -3074,7 +2608,7 @@
       rightExtContents: props.rightExtContents,
       rightMidExtContents: props.rightMidExtContents,
       draggable: props.draggable,
-      isPlus: isPlus,
+      isPlus: true,
       playerState: playerState
     }), children);
   }
@@ -3091,21 +2625,17 @@
     rightExtContents,
     rightMidExtContents,
     errorReloadTimer,
-    isPlus,
     playerState
   }) {
     if (!playerObj) {
       return /*#__PURE__*/React__default.createElement(NoSource, null);
     }
 
-    if (isPlus && playerState === 4) {
+    if (playerState.code === 70004) {
       return /*#__PURE__*/React__default.createElement(NoSource, null);
     }
 
-    return /*#__PURE__*/React__default.createElement(React__default.Fragment, null, !isPlus ? /*#__PURE__*/React__default.createElement(VideoMessage, {
-      api: playerObj.api,
-      event: playerObj.event
-    }) : /*#__PURE__*/React__default.createElement(YUVMessage, {
+    return /*#__PURE__*/React__default.createElement(React__default.Fragment, null, /*#__PURE__*/React__default.createElement(YUVMessage, {
       api: playerObj.api,
       event: playerObj.event,
       playerState: playerState
@@ -3129,7 +2659,7 @@
       isLive: isLive,
       leftExtContents: leftExtContents,
       leftMidExtContents: leftMidExtContents,
-      isPlus: isPlus
+      isPlus: true
     }), !isLive && /*#__PURE__*/React__default.createElement(TineLine, {
       api: playerObj.api,
       event: playerObj.event
@@ -3355,6 +2885,373 @@
     seekTo: PropTypes.func,
     visibel: PropTypes.bool
   };
+
+  let index = 0;
+  class Api {
+    constructor({
+      video,
+      playContainer,
+      event,
+      flv,
+      hls,
+      isPlus
+    }) {
+      this.player = video;
+      this.playContainer = playContainer;
+      this.flv = flv;
+      this.hls = hls;
+      this.event = event;
+      this.scale = 1;
+      this.position = [0, 0];
+      this.isPlus = isPlus;
+    }
+    /**
+     * 播放器销毁后 动态跟新api下的flv，hls对象
+     * @param {*} param0
+     */
+
+
+    updateChunk({
+      flv,
+      hls
+    }) {
+      this.flv = flv;
+      this.hls = hls;
+    }
+    /**
+     * 全屏
+     */
+
+
+    requestFullScreen() {
+      if (!isFullscreen$1(this.playContainer)) {
+        fullscreen$1(this.playContainer);
+      }
+    }
+    /**
+     * 退出全屏
+     */
+
+
+    cancelFullScreen() {
+      if (isFullscreen$1(this.playContainer)) {
+        exitFullscreen$1();
+      }
+    }
+
+    play() {
+      if (this.player.paused) {
+        this.player.play();
+      }
+    }
+
+    pause() {
+      if (!this.player.paused) {
+        this.player.pause();
+      }
+    }
+
+    destroy() {
+      this.player.removeAttribute('src');
+      this.unload();
+
+      if (this.flv) {
+        index++;
+        this.flv.destroy();
+      }
+
+      if (this.hls) {
+        index++;
+        this.hls.destroy();
+      }
+
+      this.player = null;
+      this.playContainer = null;
+      this.flv = null;
+      this.hls = null;
+      this.event = null;
+      this.scale = null;
+      this.position = null;
+      console.warn('destroy', index);
+    }
+    /**
+     * 设置currentTime实现seek
+     * @param {*} seconds
+     * @param {*} noEmit
+     */
+
+
+    seekTo(seconds, noEmit) {
+      const buffered = this.getBufferedTime();
+
+      if (this.flv && buffered[0] > seconds) {
+        this.flv.unload();
+        this.flv.load();
+      }
+
+      console.log(this.player);
+
+      if (this.player) {
+        console.log(this.player.currentTime);
+        this.player.currentTime = seconds;
+
+        if (!noEmit) {
+          this.event.emit(EventName.SEEK, seconds);
+        }
+      }
+    }
+    /**
+     * 视频重载
+     */
+
+
+    reload(notEmit) {
+      if (this.getCurrentTime !== 0) {
+        this.seekTo(0);
+      }
+
+      if (this.hls) {
+        this.hls.swapAudioCodec();
+        this.hls.recoverMediaError();
+      }
+
+      this.unload();
+      this.load();
+      !notEmit && this.event.emit(EventName.RELOAD);
+    }
+
+    unload() {
+      this.flv && this.flv.unload();
+      this.hls && this.hls.stopLoad();
+    }
+
+    load() {
+      if (this.flv) {
+        this.flv.load();
+      }
+
+      if (this.hls) {
+        this.hls.startLoad();
+        this.hls.loadSource(this.hls.url);
+      }
+    }
+
+    setVolume(fraction) {
+      this.player.volume = fraction;
+    }
+
+    mute() {
+      this.player.muted = true;
+    }
+
+    unmute() {
+      this.player.muted = false;
+    }
+    /**
+     * 开启画中画功能
+     */
+
+
+    requestPictureInPicture() {
+      if (this.player.requestPictureInPicture && document.pictureInPictureElement !== this.player) {
+        this.player.requestPictureInPicture();
+      }
+    }
+    /**
+     * 关闭画中画功能
+     */
+
+
+    exitPictureInPicture() {
+      if (document.exitPictureInPicture && document.pictureInPictureElement === this.player) {
+        document.exitPictureInPicture();
+      }
+    }
+    /**
+     * 设置播放速率
+     * @param {*} rate
+     */
+
+
+    setPlaybackRate(rate) {
+      this.player.playbackRate = rate;
+    }
+    /**
+     * 获取视频总时长
+     */
+
+
+    getDuration() {
+      if (!this.player) return null;
+      const {
+        duration,
+        seekable
+      } = this.player;
+
+      if (duration === Infinity && seekable.length > 0) {
+        return seekable.end(seekable.length - 1);
+      }
+
+      return duration;
+    }
+    /**
+     * 获取当前播放时间
+     */
+
+
+    getCurrentTime() {
+      if (!this.player) return null;
+      return this.player.currentTime;
+    }
+    /**
+     * 获取缓存时间
+     */
+
+
+    getSecondsLoaded() {
+      return this.getBufferedTime()[1];
+    }
+    /**
+     * 获取当前视频缓存的起止时间
+     */
+
+
+    getBufferedTime() {
+      if (!this.player) return [];
+      const {
+        buffered
+      } = this.player;
+
+      if (buffered.length === 0) {
+        return [0, 0];
+      }
+
+      const end = buffered.end(buffered.length - 1);
+      const start = buffered.start(buffered.length - 1);
+      const duration = this.getDuration();
+
+      if (end > duration) {
+        return duration;
+      }
+
+      return [start, end];
+    }
+    /**
+     * 快进通过seekTo方法实现
+     * @param {*} second
+     */
+
+
+    fastForward(second = 5) {
+      const duration = this.getDuration();
+      const currentTime = this.getCurrentTime();
+      const time = currentTime + second;
+      this.seekTo(time > duration - 1 ? duration - 1 : time);
+    }
+    /**
+     * 快退通过seekTo方法实现
+     * @param {*} second
+     */
+
+
+    backWind(second = 5) {
+      const currentTime = this.getCurrentTime();
+      const time = currentTime - second;
+      this.seekTo(time < 1 ? 1 : time);
+    }
+    /**
+     * 视频截屏方法
+     */
+
+
+    snapshot() {
+      let canvas = document.createElement('canvas');
+      let ctx = canvas.getContext('2d');
+      canvas.width = this.player.videoWidth;
+      canvas.height = this.player.videoHeight;
+      ctx.drawImage(this.player, 0, 0, canvas.width, canvas.height);
+      setTimeout(() => {
+        canvas.remove();
+        canvas = null;
+        ctx = null;
+      }, 200);
+      return canvas.toDataURL();
+    }
+
+    setScale(num, isRest = false) {
+      let scale = this.scale + num;
+
+      if (isRest) {
+        scale = num;
+      } else {
+        if (scale < 1) {
+          scale = 1;
+        }
+
+        if (scale > 3) {
+          scale = 3;
+        }
+      }
+
+      this.scale = scale;
+      this.player.style.transition = 'transform 0.3s';
+
+      this.__setTransform();
+
+      this.event.emit(EventName.TRANSFORM);
+      setTimeout(() => {
+        this.player.style.transition = 'unset';
+      }, 1000);
+    }
+
+    getScale() {
+      return this.scale;
+    }
+
+    setPosition(position, isAnimate) {
+      this.position = position;
+      this.player.style.transition = isAnimate ? 'transform 0.3s' : 'unset';
+
+      this.__setTransform();
+    }
+
+    getPosition() {
+      return this.position;
+    }
+
+    __setTransform() {
+      this.player.style.transform = `scale(${this.scale}) translate(${this.position[0]}px,${this.position[1]}px)`;
+    }
+
+    getApi() {
+      return {
+        play: this.play.bind(this),
+        reload: this.reload.bind(this),
+        pause: this.pause.bind(this),
+        seekTo: this.seekTo.bind(this),
+        setVolume: this.setVolume.bind(this),
+        mute: this.mute.bind(this),
+        unmute: this.unmute.bind(this),
+        requestPictureInPicture: this.requestPictureInPicture.bind(this),
+        exitPictureInPicture: this.exitPictureInPicture.bind(this),
+        setPlaybackRate: this.setPlaybackRate.bind(this),
+        destroy: this.destroy.bind(this),
+        getDuration: this.getDuration.bind(this),
+        getCurrentTime: this.getCurrentTime.bind(this),
+        getSecondsLoaded: this.getSecondsLoaded.bind(this),
+        getBufferedTime: this.getBufferedTime.bind(this),
+        fastForward: this.fastForward.bind(this),
+        backWind: this.backWind.bind(this),
+        snapshot: this.snapshot.bind(this),
+        requestFullScreen: this.requestFullScreen.bind(this),
+        cancelFullScreen: this.cancelFullScreen.bind(this),
+        __player: this.player,
+        flv: this.flv,
+        hls: this.hls
+      };
+    }
+
+  }
 
   /**
    * history下使用 用户切换下个播放地址

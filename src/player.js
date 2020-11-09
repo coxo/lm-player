@@ -1,18 +1,15 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react'
 import VideoEvent from './event'
-import { getVideoType, createFlvPlayer, createHlsPlayer } from './utils/util'
 import ContrallerBar from './contraller_bar'
 import ContrallerEvent from './event/contrallerEvent'
-import VideoMessage, { NoSource, YUVMessage } from './utils/message'
+import { NoSource, YUVMessage } from './utils/message'
 import TimeLine from './simple/time_line'
 import ErrorEvent from './event/errorEvent'
 import DragEvent from './event/dragEvent'
-import Api from './simple/api'
 import YUVApi from './yuv/api'
 import LiveHeart from './simple/live_heart'
 import PropTypes from 'prop-types'
 import YUVPlayer from './yuv/player'
-import SimplePlayer from './simple'
 
 import './style/index.less'
 import './yuv/player.css'
@@ -21,13 +18,10 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
   const playContainerRef = useRef(null)
   const YUVRef = useRef(null)
   const [playerObj, setPlayerObj] = useState(null)
-  const playerRef = useRef(null)
 
-  const [playerState, setPlayerState] = useState(0)
+  const [playerState, setPlayerState] = useState({code: 70000, msg: ''})
 
   const rate = useMemo(() => getRate(screenNum), [screenNum]);
-
-  const DEMUX_MSG_EVENT = 'demux_msg'
 
   // 播放运行模式
   // 0：不用插件
@@ -38,51 +32,13 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
 
   const playerOptions = JSON.parse(strS);
   
-  const VD_RUN_STATE = (config && config.mode) || Number(playerOptions.mode || 0)
   // 是否解密
   const VD_RUN_DEC = playerOptions.decryptionMode
 
-  // 是否插件播放
-  const [isPlus, setPlus] = useState(VD_RUN_STATE=== 2 ? true : false)
-
   const [yuvUrl, setYuvUrl] = useState(null)
   
-
-  
-  function loadBrowserPlayer(playerObject, callback){
-    const formartType = getVideoType(file)
-
-    if (formartType === 'flv' || type === 'flv') {
-      playerObject.flv = createFlvPlayer(playerObject.video, { ...props, file })
-
-      playerObject.flv.on(DEMUX_MSG_EVENT, (state) => {
-        callback && callback(state)
-      });
-    }
-
-    if (formartType === 'm3u8' || type === 'hls') {
-      playerObject.hls = createHlsPlayer(playerObject.video, file)
-    }
-
-    if (!['flv', 'm3u8'].includes(formartType) || type === 'native') {
-      playerObject.video.src = file
-    }
-
-    playerObject.event = new VideoEvent(playerObject.video)
-    playerObject.api = new Api(playerObject)
-    playerRef.current = playerObject
-    setPlayerObj(() => playerObject)
-
-    if (onInitPlayer) {
-      onInitPlayer(Object.assign({}, playerObject.api.getApi(), playerObject.event.getApi()))
-    }
-
-    return playerObject
-  }
-
   function loadPlusPlayer(playerObject){
     console.info('进入插件播放模式==>')
-    setPlus(true)
     playerObject.event = new VideoEvent(YUVRef.current.getDom())
     playerObject.player = YUVRef.current;
     playerObject.api = new YUVApi(playerObject)
@@ -103,7 +59,6 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
 
   function getRate(screenNum){
     if(screenNum == 1){
-      // return '1920*1080'
       return '1280*720'
     }else if(screenNum == 4){
       return '960*544'
@@ -118,16 +73,7 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
 
   useEffect(
     () => () => {
-      if(VD_RUN_STATE !== 2){
-        if (playerRef.current && playerRef.current.event) {
-          playerRef.current.event.destroy()
-        }
-        if (playerRef.current && playerRef.current.api) {
-          playerRef.current.api.destroy()
-        }
-      }else{
-        onClose()
-      }
+      onClose()
     },
     [file]
   )
@@ -149,40 +95,15 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
       return
     }
     
-    // 1：h264不用插件，其它用插件
-    // 2：全用插件
-    // 0：不用插件
-    if(VD_RUN_STATE === 1) {
-      loadBrowserPlayer(playerObject,(state) => {
-        if (state !== 7) {
-          playerObject.api.unload()
-          loadPlusPlayer(playerObject)
-        }else{
-          setPlus(false)
-        }
-      })
-    } else if(VD_RUN_STATE === 2) {
-      loadPlusPlayer(playerObject)
-    } else {
-      loadBrowserPlayer(playerObject)
-    }
+    // 全用插件
+    loadPlusPlayer(playerObject)
   }, [file])
 
   return (
     <div className={`lm-player-container ${className}`} ref={playContainerRef}>
       <div className="player-mask-layout">
       {
-        isPlus ?
-        <YUVPlayer streamUrl={yuvUrl} ratio={rate} ref={YUVRef} onPlayerState={onPlayerState}/>
-        :
-        <SimplePlayer 
-        autoPlay={autoPlay} 
-        preload={preload} 
-        muted={muted} 
-        poster={poster} 
-        controls={false} 
-        playsInline={playsinline} 
-        loop={loop} />
+        <YUVPlayer streamUrl={yuvUrl} ratio={rate} ref={YUVRef} token={props.uuid} onPlayerState={onPlayerState}  errorReloadTimer={props.errorReloadTimer}/>
       }
       </div>
 
@@ -199,7 +120,7 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
       rightExtContents={props.rightExtContents}
       rightMidExtContents={props.rightMidExtContents}
       draggable={props.draggable}
-      isPlus={isPlus}
+      isPlus={true}
       playerState={playerState}
       />
       {children}
@@ -219,22 +140,19 @@ function VideoTools({
   rightExtContents,
   rightMidExtContents,
   errorReloadTimer,
-  isPlus,
   playerState
 }) {
   if (!playerObj) {
     return <NoSource />
   }
 
-  if (isPlus && playerState === 4) {
+  if (playerState.code === 70004) {
     return <NoSource />
   }
   return (
     <>
-      {!isPlus ? 
-      <VideoMessage api={playerObj.api} event={playerObj.event}  /> 
-      :
-      <YUVMessage api={playerObj.api} event={playerObj.event} playerState={playerState}/> 
+      {
+        <YUVMessage api={playerObj.api} event={playerObj.event} playerState={playerState}/> 
       }
       {draggable && <DragEvent playContainer={playerObj.playContainer} api={playerObj.api} event={playerObj.event} />}
       {!hideContrallerBar && (
@@ -252,7 +170,7 @@ function VideoTools({
             isLive={isLive}
             leftExtContents={leftExtContents}
             leftMidExtContents={leftMidExtContents}
-            isPlus={isPlus}
+            isPlus={true}
           />
           {!isLive && <TimeLine api={playerObj.api} event={playerObj.event} />}
         </ContrallerEvent>
