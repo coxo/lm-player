@@ -66,10 +66,10 @@ export const YUVMessage = ({playerState}) => {
       return '视频错误'
     }
     if (state.status === 'reload') {
-      return `视频加载错误，正在进行重连${state.errorTimer}...`
+      return `视频加载错误，正在进行重连第${state.errorTimer}次重连`
     }
     if (state.status === 'connet') {
-      return `抱歉,连接失败,请安装播放软件!`
+      return `连接失败，请安装播放软件！`
     }
   }, [state.errorTimer, state.status])
 

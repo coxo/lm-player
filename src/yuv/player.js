@@ -578,7 +578,7 @@ class YUVPlayer extends React.Component {
 
     if (this.errorTimer < errorReloadTimer + 1) {
       this.reloadTimer = setTimeout(() => {
-        console.warn(`视频播放出错，正在进行重连${that.errorTimer}`);
+        console.warn(`视频播放出错，正在进行重连第${that.errorTimer}次重连`);
         that._createScoket();
       }, 2 * 1000);
     }else{
