@@ -53,7 +53,7 @@ function VideoMessage({ event, api }) {
 }
 
 
-export const YUVMessage = ({playerState}) => {
+export const YUVMessage = ({api, playerState}) => {
   const [state, setState] = useState({ status: null, msg: '', errorTimer: null, loading: false })
   const [messageTips, setMessageTips] = useState('')
 
@@ -75,6 +75,8 @@ export const YUVMessage = ({playerState}) => {
 
   useEffect(() => {
     setMessageTips('')
+    api.setPlayerIng(false)
+    
     if(playerState.code == 70004){
       // 关闭
       setState({ status: null, errorTimer: null, loading: false })
@@ -91,6 +93,7 @@ export const YUVMessage = ({playerState}) => {
     }
     
     if(playerState.code == 70001){
+      api.setPlayerIng(true)
       // 开始播放--消除loading...
       setState({ status: null, errorTimer: null, loading: false })
     }

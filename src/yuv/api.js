@@ -132,6 +132,19 @@ export default class YUVApi {
     }
     return duration
   }
+
+  getPlayerIng(){
+    return this.player.playering
+  }
+
+  setPlayerIng(status){
+    if(status){
+      this.player.currentTime = 1
+    }else{
+      this.player.currentTime = 0
+    }
+    return this.player.playering = status
+  }
   /**
    * 获取当前播放时间
    */
@@ -247,6 +260,7 @@ export default class YUVApi {
       snapshot: this.snapshot.bind(this),
       requestFullScreen: this.requestFullScreen.bind(this),
       cancelFullScreen: this.cancelFullScreen.bind(this),
+      getPlayerIng: this.getPlayerIng.bind(this),
       __player: this.player,
       flv: this.flv,
       hls: this.hls

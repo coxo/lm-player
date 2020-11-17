@@ -45,6 +45,11 @@
         const [playList, setPlayList] = useState(undefined);
         const [liveType, setLiveType] = useState("");
         const [historyType, setHistoryType] = useState("");
+        const [playObj, setPlayObj] = useState(null);
+
+        function preInfo(){
+          window.playObj = playObj
+        }
         /**
          * 此参与优先级高（不传递，默认使用localstorage的 VD_STM配置，全不传递时，默认使用0）
          * 0：不用插件
@@ -121,12 +126,12 @@
                 </button>
                 <button
                   style={{ width: 60, height: 32 }}
-                  onClick={e => setScreenNum(9)}
+                  onClick={e => preInfo(9)}
                 >
                   设置1分屏
                 </button>
               </div>
-              <Player type={liveType} file={file} isLive={isLive} screenNum={screenNum} />
+              <Player type={liveType} onInitPlayer={setPlayObj} file={file} isLive={isLive} screenNum={screenNum} />
             </div>
             <div style={{ width: 800, margin: "0 auto 40px auto" }}>
               <h2 style={{ marginBottom: 10 }}>

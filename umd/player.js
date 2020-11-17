@@ -944,6 +944,7 @@
   }
 
   const YUVMessage = ({
+    api,
     playerState
   }) => {
     const [state, setState] = React.useState({
@@ -972,6 +973,7 @@
     }, [state.errorTimer, state.status]);
     React.useEffect(() => {
       setMessageTips('');
+      api.setPlayerIng(false);
 
       if (playerState.code == 70004) {
         // 关闭
@@ -1001,7 +1003,8 @@
       }
 
       if (playerState.code == 70001) {
-        // 开始播放--消除loading...
+        api.setPlayerIng(true); // 开始播放--消除loading...
+
         setState({
           status: null,
           errorTimer: null,
@@ -1562,6 +1565,20 @@
 
       return duration;
     }
+
+    getPlayerIng() {
+      return this.player.playering;
+    }
+
+    setPlayerIng(status) {
+      if (status) {
+        this.player.currentTime = 1;
+      } else {
+        this.player.currentTime = 0;
+      }
+
+      return this.player.playering = status;
+    }
     /**
      * 获取当前播放时间
      */
@@ -1703,6 +1720,7 @@
         snapshot: this.snapshot.bind(this),
         requestFullScreen: this.requestFullScreen.bind(this),
         cancelFullScreen: this.cancelFullScreen.bind(this),
+        getPlayerIng: this.getPlayerIng.bind(this),
         __player: this.player,
         flv: this.flv,
         hls: this.hls
@@ -2540,6 +2558,7 @@
 
     function onClose() {
       YUVRef.current && YUVRef.current.closeWebSocket();
+      playerObj && playerObj.api.setPlayerIng(false);
     }
 
     function onPlayerState(state) {

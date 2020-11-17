@@ -51,6 +51,7 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
 
   function onClose(){
     YUVRef.current && YUVRef.current.closeWebSocket()
+    playerObj && playerObj.api.setPlayerIng(false)
   }
 
   function onPlayerState(state){
