@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import IconFont from '../simple/iconfont'
 import Slider from '../simple/slider'
-import { dateFormat } from '../utils/util'
 import EventName from '../event/eventName'
 import PropTypes from 'prop-types'
-import { computedTimeAndIndex } from './utils'
+import { dateFormat, computedTimeAndIndex } from './utils'
 import '../style/time-line.less'
 
 const computedLineList = (historyList) => {

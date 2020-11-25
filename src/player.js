@@ -14,6 +14,8 @@ import YUVPlayer from './yuv/player'
 import './style/index.less'
 import './yuv/player.css'
 
+import { getScreenRate, getGlobalCache, GL_CACHE } from './yuv/util'
+
 function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinline, loop, preload, children, onInitPlayer, screenNum , config, ...props }) {
   const playContainerRef = useRef(null)
   const YUVRef = useRef(null)
@@ -21,19 +23,15 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
 
   const [playerState, setPlayerState] = useState({code: 70000, msg: ''})
 
-  const rate = useMemo(() => getRate(screenNum), [screenNum]);
+  const rate = useMemo(() => getScreenRate(screenNum), [screenNum]);
 
   // 播放运行模式
   // 0：不用插件
   // 1：h264不用插件，其它用插件
   // 2：全用插件
 
-  const strS = localStorage.getItem('PY_PLUS')
-
-  const playerOptions = JSON.parse(strS);
-  
   // 是否解密
-  const VD_RUN_DEC = playerOptions.decryptionMode
+  const VD_RUN_DEC = getGlobalCache(GL_CACHE.DM)
 
   const [yuvUrl, setYuvUrl] = useState(null)
   
@@ -56,20 +54,6 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
 
   function onPlayerState(state){
     setPlayerState(state)
-  }
-
-  function getRate(screenNum){
-    if(screenNum == 1){
-      return '1280*720'
-    }else if(screenNum == 4){
-      return '960*544'
-    }else if(screenNum == 9){
-      return '640*480'
-    }else if(screenNum == 16){
-      return '352*288'
-    }else{
-      return '960*544'
-    }
   }
 
   useEffect(

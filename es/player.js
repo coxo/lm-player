@@ -495,85 +495,9 @@ LeftBar.propTypes = {
 };
 
 /**
- * 创建HLS对象
- * @param {*} video
- * @param {*} file
- */
-
-function createHlsPlayer(video, file) {
-  if (isSupported()) {
-    const player = new Hls({
-      liveDurationInfinity: true,
-      levelLoadingTimeOut: 15000,
-      fragLoadingTimeOut: 25000,
-      enableWorker: true
-    });
-    player.loadSource(file);
-    player.attachMedia(video);
-    return player;
-  }
-}
-/**
- * 创建FLV对象
- * @param {*} video
- * @param {*} options
- */
-
-function createFlvPlayer(video, options) {
-  const {
-    flvOptions = {},
-    flvConfig = {}
-  } = options;
-
-  if (flvjs.isSupported()) {
-    const player = flvjs.createPlayer(Object.assign({}, flvOptions, {
-      type: 'flv',
-      url: options.file
-    }), Object.assign({}, flvConfig, {
-      enableWorker: true,
-      // lazyLoad: false,
-      // Indicates how many seconds of data to be kept for lazyLoad.
-      // lazyLoadMaxDuration: 0,
-      // autoCleanupMaxBackwardDuration: 3,
-      // autoCleanupMinBackwardDuration: 2,
-      // autoCleanupSourceBuffer: true,
-      enableStashBuffer: false,
-      stashInitialSize: 128,
-      isLive: options.isLive || true
-    }));
-    player.attachMediaElement(video);
-    player.load();
-    return player;
-  }
-}
-/**
- * 获取播放文件类型
- * @param {*} url
- */
-
-function getVideoType(url) {
-  return url.indexOf('.flv') > -1 ? 'flv' : url.indexOf('.m3u8') > -1 ? 'm3u8' : 'native';
-}
-/**
- * 日期格式化
- * @param {*} timetemp
- */
-
-function dateFormat(timetemp) {
-  const date = new Date(timetemp);
-  let YYYY = date.getFullYear();
-  let DD = date.getDate();
-  let MM = date.getMonth() + 1;
-  let hh = date.getHours();
-  let mm = date.getMinutes();
-  let ss = date.getSeconds();
-  return `${YYYY}.${MM > 9 ? MM : '0' + MM}.${DD > 9 ? DD : '0' + DD} ${hh > 9 ? hh : '0' + hh}.${mm > 9 ? mm : '0' + mm}.${ss > 9 ? ss : '0' + ss}`;
-}
-/**
  * 全屏
  * @param {*} element
  */
-
 function fullscreen(element) {
   if (element.requestFullScreen) {
     element.requestFullScreen();
@@ -681,16 +605,107 @@ function computedBound(ele, currentPosition, scale) {
     return;
   }
 }
+/**
+ * 获取视频分辨率
+ */
+
+function getVideoRatio() {
+  return {
+    // '5': { value: '1920*1080', name: '超高清'},
+    '1': {
+      value: '1280*720',
+      name: '超清'
+    },
+    '2': {
+      value: '960*544',
+      name: '高清'
+    },
+    '3': {
+      value: '640*480',
+      name: '标清'
+    },
+    '4': {
+      value: '352*288',
+      name: '普清'
+    }
+  };
+}
+/**
+ * 根据分屏获取对应的分辨率
+ * 默认 960*544
+ */
+
+function getScreenRate(num) {
+  const videoRatio = getVideoRatio();
+  let ratio = '';
+
+  switch (num) {
+    case 1:
+      ratio = videoRatio['1'].value;
+      break;
+
+    case 4:
+      ratio = videoRatio['2'].value;
+      break;
+
+    case 9:
+      ratio = videoRatio['3'].value;
+      break;
+
+    case 16:
+      ratio = videoRatio['4'].value;
+      break;
+
+    default:
+      ratio = videoRatio['2'].value;
+      break;
+  }
+
+  return ratio;
+}
+/**
+ * 获取全局配置
+ * @param {*} key 
+ */
+
+function getGlobalCache(key) {
+  const strS = localStorage.getItem('PY_PLUS');
+  let playerOptions = null;
+
+  try {
+    playerOptions = JSON.parse(strS);
+  } catch (error) {
+    console.error('播放配置出错，请检查浏览器存储！');
+  }
+
+  return playerOptions[key];
+}
+/**
+ * 全局配置
+ * decryptionMode： 是否加密
+ * switchRate：码率切换控制
+ */
+
+const GL_CACHE = {
+  DM: 'decryptionMode',
+  SR: 'switchRate'
+};
 
 function RightBar({
   playContainer,
   api,
+  isLive,
   scale,
   snapshot,
   rightExtContents,
   rightMidExtContents
 }) {
-  const [dep, setDep] = useState(Date.now());
+  // 获取视频分辨率
+  const ratioValue = getVideoRatio();
+  const [dep, setDep] = useState(Date.now()); // 默认高清3，544
+
+  const [viewText, setViewText] = useState(ratioValue[2].name);
+  const isSwithRate = getGlobalCache(GL_CACHE.SR) || false;
   useEffect(() => {
     const update = () => setDep(Date.now());
 
@@ -711,6 +726,10 @@ function RightBar({
       api.setPosition(position, true);
     }
   }, [api, playContainer]);
+  const setRatio = useCallback((...args) => {
+    setViewText(ratioValue[args].name);
+    api.exeRatioCommand(ratioValue[args].value);
+  }, [api]);
   return /*#__PURE__*/React.createElement("div", {
     className: "contraller-right-bar"
   }, rightMidExtContents, scale && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Bar, null, /*#__PURE__*/React.createElement(IconFont, {
@@ -729,7 +748,16 @@ function RightBar({
     title: "\u622A\u56FE",
     onClick: () => snapshot(api.snapshot()),
     type: "lm-player-SearchBox"
-  })), /*#__PURE__*/React.createElement(Bar, null, /*#__PURE__*/React.createElement(IconFont, {
+  })), isLive && isSwithRate && /*#__PURE__*/React.createElement(Bar, {
+    className: 'ratioMenu'
+  }, /*#__PURE__*/React.createElement("span", {
+    class: "ratioMenu-main"
+  }, viewText), /*#__PURE__*/React.createElement("ul", {
+    class: "ratioMenu-level"
+  }, Object.keys(ratioValue).map(item => /*#__PURE__*/React.createElement("li", {
+    class: "ratioMenu-level-1",
+    onClick: () => setRatio(item)
+  }, ratioValue[item].name)))), /*#__PURE__*/React.createElement(Bar, null, /*#__PURE__*/React.createElement(IconFont, {
     title: isfull ? '窗口' : '全屏',
     onClick: fullscreen,
     type: isfull ? 'lm-player-ExitFull_Main' : 'lm-player-Full_Main'
@@ -808,6 +836,7 @@ function ContrallerBar({
   }), /*#__PURE__*/React.createElement(RightBar, {
     api: api,
     event: event,
+    isLive: isLive,
     playContainer: playContainer,
     snapshot: snapshot,
     rightExtContents: rightExtContents,
@@ -1049,7 +1078,7 @@ const YUVMessage = ({
   }, message), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 12,
-      color: '#333'
+      color: '#666'
     }
   }, messageTips), status === 'connet' ? /*#__PURE__*/React.createElement("a", {
     className: "lm-player-plus",
@@ -1246,6 +1275,11 @@ function ErrorEvent({
       }
 
       console.error(...args);
+
+      if (args[1] && args[1].details && (args[1].details.includes("bufferStalledError") || args[1].details.includes("bufferNudgeOnStall") || args[1].details.includes("bufferSeekOverHole") || args[1].details.includes("bufferAddCodecError"))) {
+        return;
+      }
+
       errorInfo.current = args;
       setErrorTime(errorTimer + 1);
     };
@@ -1254,6 +1288,7 @@ function ErrorEvent({
       if (errorTimer > 0) {
         console.warn('视频重连成功！');
         event.emit(EventName.RELOAD_SUCCESS);
+        api.restPlayRate();
         clearErrorTimer();
       }
     };
@@ -1323,6 +1358,68 @@ function ErrorEvent({
   return /*#__PURE__*/React.createElement(React.Fragment, null);
 }
 
+/**
+ * 计算视频拖拽边界
+ * @param {*} ele
+ * @param {*} currentPosition
+ * @param {*} scale
+ */
+function computedBound$1(ele, currentPosition, scale) {
+  const data = currentPosition;
+  const eleRect = ele.getBoundingClientRect();
+  const w = eleRect.width;
+  const h = eleRect.height;
+  let lx = 0,
+      ly = 0;
+
+  if (scale === 1) {
+    return [0, 0];
+  }
+
+  lx = w * (scale - 1) / 2 / scale;
+  ly = h * (scale - 1) / 2 / scale;
+  let x = 0,
+      y = 0;
+
+  if (data[0] >= 0 && data[0] > lx) {
+    x = lx;
+  }
+
+  if (data[0] >= 0 && data[0] < lx) {
+    x = data[0];
+  }
+
+  if (data[0] < 0 && data[0] < -lx) {
+    x = -lx;
+  }
+
+  if (data[0] < 0 && data[0] > -lx) {
+    x = data[0];
+  }
+
+  if (data[1] >= 0 && data[1] > ly) {
+    y = ly;
+  }
+
+  if (data[1] >= 0 && data[1] < ly) {
+    y = data[1];
+  }
+
+  if (data[1] < 0 && data[1] < -ly) {
+    y = -ly;
+  }
+
+  if (data[1] < 0 && data[1] > -ly) {
+    y = data[1];
+  }
+
+  if (x !== data[0] || y !== data[1]) {
+    return [x, y];
+  } else {
+    return;
+  }
+}
+
 class DragEvent extends React.Component {
   constructor(props) {
     super(props);
@@ -1356,7 +1453,7 @@ class DragEvent extends React.Component {
       const {
         api
       } = this.props;
-      let position = computedBound(this.dragDom, api.getPosition(), api.getScale());
+      let position = computedBound$1(this.dragDom, api.getPosition(), api.getScale());
       position && api.setPosition(position, true);
     };
 
@@ -1407,6 +1504,7 @@ class YUVApi {
     this.hls = hls;
     this.event = event;
     this.scale = 1;
+    this.playbackRate = 1;
     this.position = [0, 0];
   }
   /**
@@ -1512,8 +1610,16 @@ class YUVApi {
   mute() {// this.player.muted = true
   }
 
-  unmute() {} // this.player.muted = false
+  unmute() {// this.player.muted = false
+  }
 
+  setVolume(fraction) {
+    this.player.volume = fraction;
+  }
+
+  exeRatioCommand(RATIO) {
+    this.currentCanvas && this.currentCanvas.sendRatioCommand(RATIO);
+  }
   /**
    * 开启画中画功能
    */
@@ -1541,7 +1647,13 @@ class YUVApi {
 
 
   setPlaybackRate(rate) {
+    this.playbackRate = rate;
     this.player.playbackRate = rate;
+  }
+
+  restPlayRate() {
+    console.info(this.playbackRate);
+    this.player.playbackRate = this.playbackRate;
   }
   /**
    * 获取视频总时长
@@ -1560,10 +1672,6 @@ class YUVApi {
     }
 
     return duration;
-  }
-
-  getPlayerIng() {
-    return this.player.playering;
   }
 
   setPlayerIng(status) {
@@ -1705,6 +1813,7 @@ class YUVApi {
       unmute: this.unmute.bind(this),
       requestPictureInPicture: this.requestPictureInPicture.bind(this),
       exitPictureInPicture: this.exitPictureInPicture.bind(this),
+      restPlayRate: this.restPlayRate.bind(this),
       setPlaybackRate: this.setPlaybackRate.bind(this),
       destroy: this.destroy.bind(this),
       getDuration: this.getDuration.bind(this),
@@ -1716,7 +1825,6 @@ class YUVApi {
       snapshot: this.snapshot.bind(this),
       requestFullScreen: this.requestFullScreen.bind(this),
       cancelFullScreen: this.cancelFullScreen.bind(this),
-      getPlayerIng: this.getPlayerIng.bind(this),
       __player: this.player,
       flv: this.flv,
       hls: this.hls
@@ -1807,20 +1915,6 @@ function LiveHeart({
   return /*#__PURE__*/React.createElement(React.Fragment, null);
 }
 
-const ControllerStatus = {
-  kIdle: 0,
-  kConnecting: 1,
-  kBuffering: 2,
-  kError: 3,
-  kComplete: 4
-};
-const ControllerErrors = {
-  OK: 'OK',
-  EXCEPTION: 'Exception',
-  HTTP_STATUS_CODE_INVALID: 'HttpStatusCodeInvalid',
-  CONNECTING_TIMEOUT: 'ConnectingTimeout'
-};
-
 class RuntimeException {
   constructor(message) {
     this._message = message;
@@ -1839,12 +1933,25 @@ class RuntimeException {
   }
 
 }
+
+const ControllerStatus = {
+  kIdle: 0,
+  kConnecting: 1,
+  kBuffering: 2,
+  kError: 3,
+  kComplete: 4
+};
+const ControllerErrors = {
+  OK: 'OK',
+  EXCEPTION: 'Exception',
+  HTTP_STATUS_CODE_INVALID: 'HttpStatusCodeInvalid',
+  CONNECTING_TIMEOUT: 'ConnectingTimeout'
+};
 /* Controller has callbacks which have following prototypes:
  *     function onError(errorType: number, errorInfo: {code: number, msg: string}): void
  *     function onComplete(rangeFrom: number, rangeTo: number): void
  *     function onCommand(response: jsonobj): void
  */
-
 
 class WebSocketController {
   static isSupported() {
@@ -2108,35 +2215,35 @@ class WebGLPlayer {
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1); // GLSL 格式的顶点着色器代码
 
     let vertexShaderSource = `
-        attribute lowp vec4 a_vertexPosition;
-        uniform float px;
-        uniform float py;
-        attribute vec2 a_texturePosition;
-        varying vec2 v_texCoord;
-        void main() {
-            gl_Position = a_vertexPosition;
-            v_texCoord = a_texturePosition;
-        }
-    `;
+          attribute lowp vec4 a_vertexPosition;
+          uniform float px;
+          uniform float py;
+          attribute vec2 a_texturePosition;
+          varying vec2 v_texCoord;
+          void main() {
+              gl_Position = a_vertexPosition;
+              v_texCoord = a_texturePosition;
+          }
+      `;
     let fragmentShaderSource = `
-        precision lowp float;
-        uniform sampler2D samplerY;
-        uniform sampler2D samplerU;
-        uniform sampler2D samplerV;
-        varying vec2 v_texCoord;
-        void main() {
-            float r,g,b,y,u,v,fYmul;
-            y = texture2D(samplerY, v_texCoord).r;
-            u = texture2D(samplerU, v_texCoord).r;
-            v = texture2D(samplerV, v_texCoord).r;
-
-            fYmul = y * 1.1643828125;
-            r = fYmul + 1.59602734375 * v - 0.870787598;
-            g = fYmul - 0.39176171875 * u - 0.81296875 * v + 0.52959375;
-            b = fYmul + 2.01723046875 * u - 1.081389160375;
-            gl_FragColor = vec4(r, g, b, 1.0);
-        }
-    `;
+          precision lowp float;
+          uniform sampler2D samplerY;
+          uniform sampler2D samplerU;
+          uniform sampler2D samplerV;
+          varying vec2 v_texCoord;
+          void main() {
+              float r,g,b,y,u,v,fYmul;
+              y = texture2D(samplerY, v_texCoord).r;
+              u = texture2D(samplerU, v_texCoord).r;
+              v = texture2D(samplerV, v_texCoord).r;
+  
+              fYmul = y * 1.1643828125;
+              r = fYmul + 1.59602734375 * v - 0.870787598;
+              g = fYmul - 0.39176171875 * u - 0.81296875 * v + 0.52959375;
+              b = fYmul + 2.01723046875 * u - 1.081389160375;
+              gl_FragColor = vec4(r, g, b, 1.0);
+          }
+      `;
 
     let vertexShader = this._compileShader(vertexShaderSource, gl.VERTEX_SHADER);
 
@@ -2296,6 +2403,10 @@ class WebGLPlayer {
     this.canvas.width = canvasWidth;
     this.canvas.height = canvasWidth * height / width;
     this.canvas.style = 'width:100%;height:100%';
+
+    this.canvas.oncontextmenu = function () {
+      return false;
+    };
   }
 
   destroyfunction() {
@@ -2342,13 +2453,17 @@ class YUVPlayer extends React.Component {
 
     if (this.props.ratio !== nextProps.ratio) {
       this.RATIO = nextProps.ratio;
-      this.RATIO && this.websocket && this.websocket.send(`{"commond":"modify", "url":"${this.RATIO}"}`);
+      this.sendRatioCommand(this.RATIO);
     }
   }
 
   componentWillUnmount() {
     this.closeWebSocket();
     clearTimeout(this.reloadTimer);
+  }
+
+  sendRatioCommand(RATIO) {
+    RATIO && this.websocket && this.websocket.send(`{"commond":"modify", "url":"${RATIO}"}`);
   }
 
   openPlayer() {
@@ -2529,15 +2644,13 @@ function SinglePlayer({
     code: 70000,
     msg: ''
   });
-  const rate = useMemo(() => getRate(screenNum), [screenNum]); // 播放运行模式
+  const rate = useMemo(() => getScreenRate(screenNum), [screenNum]); // 播放运行模式
   // 0：不用插件
   // 1：h264不用插件，其它用插件
   // 2：全用插件
+  // 是否解密
 
-  const strS = localStorage.getItem('PY_PLUS');
-  const playerOptions = JSON.parse(strS); // 是否解密
-
-  const VD_RUN_DEC = playerOptions.decryptionMode;
+  const VD_RUN_DEC = getGlobalCache(GL_CACHE.DM);
   const [yuvUrl, setYuvUrl] = useState(null);
 
   function loadPlusPlayer(playerObject) {
@@ -2559,20 +2672,6 @@ function SinglePlayer({
 
   function onPlayerState(state) {
     setPlayerState(state);
-  }
-
-  function getRate(screenNum) {
-    if (screenNum == 1) {
-      return '1280*720';
-    } else if (screenNum == 4) {
-      return '960*544';
-    } else if (screenNum == 9) {
-      return '640*480';
-    } else if (screenNum == 16) {
-      return '352*288';
-    } else {
-      return '960*544';
-    }
   }
 
   useEffect(() => () => {
@@ -2760,6 +2859,81 @@ const computedTimeAndIndex = (historyList, currentTime) => {
 
   return [index, seekTime];
 };
+/**
+ * 创建HLS对象
+ * @param {*} video
+ * @param {*} file
+ */
+
+function createHlsPlayer(video, file) {
+  if (isSupported()) {
+    const player = new Hls({
+      liveDurationInfinity: true,
+      levelLoadingTimeOut: 15000,
+      fragLoadingTimeOut: 25000,
+      enableWorker: true
+    });
+    player.loadSource(file);
+    player.attachMedia(video);
+    return player;
+  }
+}
+/**
+ * 创建FLV对象
+ * @param {*} video
+ * @param {*} options
+ */
+
+function createFlvPlayer(video, options) {
+  const {
+    flvOptions = {},
+    flvConfig = {}
+  } = options;
+
+  if (flvjs.isSupported()) {
+    const player = flvjs.createPlayer(Object.assign({}, flvOptions, {
+      type: 'flv',
+      url: options.file
+    }), Object.assign({}, flvConfig, {
+      enableWorker: true,
+      // lazyLoad: false,
+      // Indicates how many seconds of data to be kept for lazyLoad.
+      // lazyLoadMaxDuration: 0,
+      // autoCleanupMaxBackwardDuration: 3,
+      // autoCleanupMinBackwardDuration: 2,
+      // autoCleanupSourceBuffer: true,
+      enableStashBuffer: false,
+      stashInitialSize: 128,
+      isLive: options.isLive || true
+    }));
+    player.attachMediaElement(video);
+    player.load();
+    return player;
+  }
+}
+/**
+ * 获取播放文件类型
+ * @param {*} url
+ */
+
+function getVideoType(url) {
+  return url.indexOf('.flv') > -1 ? 'flv' : url.indexOf('.m3u8') > -1 ? 'm3u8' : 'native';
+}
+/**
+ * 日期格式化
+ * @param {*} timetemp
+ */
+
+function dateFormat(timetemp) {
+  const date = new Date(timetemp);
+  let YYYY = date.getFullYear();
+  let DD = date.getDate();
+  let MM = date.getMonth() + 1;
+  let hh = date.getHours();
+  let mm = date.getMinutes();
+  let ss = date.getSeconds();
+  return `${YYYY}.${MM > 9 ? MM : '0' + MM}.${DD > 9 ? DD : '0' + DD} ${hh > 9 ? hh : '0' + hh}.${mm > 9 ? mm : '0' + mm}.${ss > 9 ? ss : '0' + ss}`;
+}
 
 const computedLineList = historyList => {
   const duration = historyList.duration;
@@ -2919,10 +3093,12 @@ class Api {
     this.scale = 1;
     this.position = [0, 0];
     this.isPlus = isPlus;
+    this.playbackRate = 1;
+    this.currPath = null;
   }
   /**
    * 播放器销毁后 动态跟新api下的flv，hls对象
-   * @param {*} param0
+   * @param {*} param
    */
 
 
@@ -2932,6 +3108,22 @@ class Api {
   }) {
     this.flv = flv;
     this.hls = hls;
+  }
+  /**
+   * 当前播放的地址
+   */
+
+
+  setPath(file) {
+    this.currPath = file;
+  }
+  /**
+   * 获取播放地址
+   */
+
+
+  getFilePath() {
+    return this.currPath;
   }
   /**
    * 全屏
@@ -3089,7 +3281,13 @@ class Api {
 
 
   setPlaybackRate(rate) {
-    this.player.playbackRate = rate;
+    this.playbackRate = rate;
+    this.player && (this.player.playbackRate = rate);
+  }
+
+  restPlayRate() {
+    console.info(this.playbackRate);
+    this.player.playbackRate = this.playbackRate;
   }
   /**
    * 获取视频总时长
@@ -3108,6 +3306,10 @@ class Api {
     }
 
     return duration;
+  }
+
+  getPlayerIng() {
+    return this.player.playbackRate;
   }
   /**
    * 获取当前播放时间
@@ -3249,7 +3451,10 @@ class Api {
       unmute: this.unmute.bind(this),
       requestPictureInPicture: this.requestPictureInPicture.bind(this),
       exitPictureInPicture: this.exitPictureInPicture.bind(this),
+      restPlayRate: this.restPlayRate.bind(this),
+      getPlayerIng: this.getPlayerIng.bind(this),
       setPlaybackRate: this.setPlaybackRate.bind(this),
+      getFilePath: this.getFilePath.bind(this),
       destroy: this.destroy.bind(this),
       getDuration: this.getDuration.bind(this),
       getCurrentTime: this.getCurrentTime.bind(this),
@@ -3297,6 +3502,7 @@ PlayEnd.propTypes = {
 function HistoryPlayer({
   type,
   historyList,
+  speed,
   defaultTime,
   className,
   autoPlay,
@@ -3373,6 +3579,11 @@ function HistoryPlayer({
       changePlayIndex(playIndex + 1);
     }
   }, [file, playIndex, historyList]);
+  useEffect(() => {
+    if (file && playerObj) {
+      playerObj && playerObj.api.setPlaybackRate(speed);
+    }
+  }, [file, playIndex, historyList, speed]);
   useEffect(() => () => {
     if (playerRef.current && playerRef.current.event) {
       playerRef.current.event.destroy();
@@ -3437,6 +3648,9 @@ function HistoryPlayer({
         reload: reloadHistory
       }));
     }
+
+    playerObject.api.setPath(file);
+    playerObject.api.setPlaybackRate(speed);
   }, [historyList, file]);
   return /*#__PURE__*/React.createElement("div", {
     className: `lm-player-container ${className}`,

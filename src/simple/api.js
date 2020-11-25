@@ -12,15 +12,31 @@ export default class Api {
     this.scale = 1
     this.position = [0, 0]
     this.isPlus = isPlus
+    this.playbackRate = 1
+    this.currPath = null
   }
   /**
    * 播放器销毁后 动态跟新api下的flv，hls对象
-   * @param {*} param0
+   * @param {*} param
    */
   updateChunk({ flv, hls }) {
     this.flv = flv;
     this.hls = hls;
   }
+  /**
+   * 当前播放的地址
+   */
+  setPath(file){
+    this.currPath = file
+  }
+
+  /**
+   * 获取播放地址
+   */
+  getFilePath(){
+    return this.currPath
+  }
+
   /**
    * 全屏
    */
@@ -149,7 +165,13 @@ export default class Api {
    * @param {*} rate
    */
   setPlaybackRate(rate) {
-    this.player.playbackRate = rate;
+    this.playbackRate = rate
+    this.player && (this.player.playbackRate = rate)
+  }
+
+  restPlayRate(){
+    console.info(this.playbackRate)
+    this.player.playbackRate = this.playbackRate
   }
   /**
    * 获取视频总时长
@@ -162,6 +184,11 @@ export default class Api {
     }
     return duration;
   }
+
+  getPlayerIng(){
+    return this.player.playbackRate
+  }
+
   /**
    * 获取当前播放时间
    */
@@ -276,7 +303,10 @@ export default class Api {
       unmute: this.unmute.bind(this),
       requestPictureInPicture: this.requestPictureInPicture.bind(this),
       exitPictureInPicture: this.exitPictureInPicture.bind(this),
+      restPlayRate: this.restPlayRate.bind(this),
+      getPlayerIng: this.getPlayerIng.bind(this),
       setPlaybackRate: this.setPlaybackRate.bind(this),
+      getFilePath: this.getFilePath.bind(this),
       destroy: this.destroy.bind(this),
       getDuration: this.getDuration.bind(this),
       getCurrentTime: this.getCurrentTime.bind(this),

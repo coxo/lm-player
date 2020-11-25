@@ -1,11 +1,17 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react'
 import IconFont from '../simple/iconfont'
 import Bar from './bar'
-import { isFullscreen, fullScreenListener, computedBound } from '../utils/util'
+import { isFullscreen, fullScreenListener, computedBound, getVideoRatio, getGlobalCache, GL_CACHE } from '../yuv/util'
 import PropTypes from 'prop-types'
 
-function RightBar({ playContainer, api, scale, snapshot, rightExtContents, rightMidExtContents }) {
+function RightBar({ playContainer, api, isLive, scale, snapshot, rightExtContents, rightMidExtContents }) {
+  // 获取视频分辨率
+  const ratioValue = getVideoRatio()
   const [dep, setDep] = useState(Date.now())
+  // 默认高清3，544
+  const [viewText, setViewText] = useState(ratioValue[2].name);
+
+  const isSwithRate = getGlobalCache(GL_CACHE.SR) || false
 
   useEffect(() => {
     const update = () => setDep(Date.now())
@@ -32,6 +38,13 @@ function RightBar({ playContainer, api, scale, snapshot, rightExtContents, right
     [api, playContainer]
   )
 
+  const setRatio = useCallback(
+    (...args) => {
+      setViewText(ratioValue[args].name)
+      api.exeRatioCommand(ratioValue[args].value)
+    },
+    [api]
+  )
 
   return (
     <div className="contraller-right-bar">
@@ -55,6 +68,20 @@ function RightBar({ playContainer, api, scale, snapshot, rightExtContents, right
           <IconFont title="截图" onClick={() => snapshot(api.snapshot())} type="lm-player-SearchBox" />
         </Bar>
       )}
+
+     {isLive && isSwithRate && (
+        <Bar className={'ratioMenu'}>
+            <span class='ratioMenu-main'>{viewText}</span>
+            <ul class="ratioMenu-level">
+              {
+                Object.keys(ratioValue).map((item)=>(
+                  <li class="ratioMenu-level-1" onClick={() => setRatio(item)}>{ratioValue[item].name}</li>
+                ))
+              }
+            </ul>
+        </Bar>
+      )}
+
       <Bar>
         <IconFont title={isfull ? '窗口' : '全屏'} onClick={fullscreen} type={isfull ? 'lm-player-ExitFull_Main' : 'lm-player-Full_Main'} />
       </Bar>

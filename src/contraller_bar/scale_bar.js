@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react'
 import IconFont from '../simple/iconfont'
 import Bar from './bar'
-import { computedBound } from '../utils/util'
+import { computedBound } from '../yuv/util'
 
 function ScaleBar({ playContainer, api, scale }) {
   const setScale = useCallback(

@@ -1,4 +1,4 @@
-import { fullscreen, isFullscreen, exitFullscreen } from '../utils/util'
+import { fullscreen, isFullscreen, exitFullscreen } from './util'
 import EventName from '../event/eventName'
 
 export default class YUVApi {
@@ -10,6 +10,7 @@ export default class YUVApi {
     this.hls = hls
     this.event = event
     this.scale = 1
+    this.playbackRate = 1
     this.position = [0, 0]
   }
   /**
@@ -97,6 +98,14 @@ export default class YUVApi {
    // this.player.muted = false
   }
 
+  setVolume(fraction) {
+    this.player.volume = fraction
+  }
+  
+  exeRatioCommand(RATIO){
+    this.currentCanvas && this.currentCanvas.sendRatioCommand(RATIO);
+  }
+
   /**
    * 开启画中画功能
    */
@@ -119,7 +128,13 @@ export default class YUVApi {
    * @param {*} rate
    */
   setPlaybackRate(rate) {
+    this.playbackRate = rate
     this.player.playbackRate = rate
+  }
+
+  restPlayRate(){
+    console.info(this.playbackRate)
+    this.player.playbackRate = this.playbackRate
   }
   /**
    * 获取视频总时长
@@ -133,9 +148,6 @@ export default class YUVApi {
     return duration
   }
 
-  getPlayerIng(){
-    return this.player.playering
-  }
 
   setPlayerIng(status){
     if(status){
@@ -249,6 +261,7 @@ export default class YUVApi {
       unmute: this.unmute.bind(this),
       requestPictureInPicture: this.requestPictureInPicture.bind(this),
       exitPictureInPicture: this.exitPictureInPicture.bind(this),
+      restPlayRate: this.restPlayRate.bind(this),
       setPlaybackRate: this.setPlaybackRate.bind(this),
       destroy: this.destroy.bind(this),
       getDuration: this.getDuration.bind(this),
@@ -260,7 +273,6 @@ export default class YUVApi {
       snapshot: this.snapshot.bind(this),
       requestFullScreen: this.requestFullScreen.bind(this),
       cancelFullScreen: this.cancelFullScreen.bind(this),
-      getPlayerIng: this.getPlayerIng.bind(this),
       __player: this.player,
       flv: this.flv,
       hls: this.hls

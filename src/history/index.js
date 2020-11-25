@@ -10,10 +10,9 @@ import VideoEvent from '../event'
 import PlayEnd from './play_end'
 import EventName from '../event/eventName'
 import ContrallerEvent from '../event/contrallerEvent'
-import { getVideoType, createFlvPlayer, createHlsPlayer } from '../utils/util'
-import { computedTimeAndIndex } from './utils'
+import { getVideoType, createFlvPlayer, createHlsPlayer, computedTimeAndIndex } from './utils'
 
-function HistoryPlayer({ type, historyList, defaultTime, className, autoPlay, muted, poster, playsinline, loop, preload, children, onInitPlayer, ...props }) {
+function HistoryPlayer({ type, historyList, speed, defaultTime, className, autoPlay, muted, poster, playsinline, loop, preload, children, onInitPlayer, ...props }) {
   const playContainerRef = useRef(null);
   const [playerObj, setPlayerObj] = useState(null);
   const playerRef = useRef(null);
@@ -84,6 +83,12 @@ function HistoryPlayer({ type, historyList, defaultTime, className, autoPlay, mu
     }
   }, [file, playIndex, historyList]);
 
+  useEffect(() => {
+    if (file && playerObj) {
+      playerObj && playerObj.api.setPlaybackRate(speed)
+    }
+  }, [file, playIndex, historyList, speed]);
+
   useEffect(
     () => () => {
       if (playerRef.current && playerRef.current.event) {
@@ -134,6 +139,8 @@ function HistoryPlayer({ type, historyList, defaultTime, className, autoPlay, mu
     if (onInitPlayer) {
       onInitPlayer(Object.assign({}, playerObject.api.getApi(), playerObject.event.getApi(), { seekTo, changePlayIndex, reload: reloadHistory }));
     }
+    playerObject.api.setPath(file)
+    playerObject.api.setPlaybackRate(speed)
   }, [historyList, file]);
 
   return (

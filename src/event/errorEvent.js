@@ -11,7 +11,17 @@ function ErrorEvent({ event, api, errorReloadTimer, flv, hls, changePlayIndex, i
       if(args[2] && args[2].msg && args[2].msg.includes("Unsupported audio")){
         return
       }
+      
       console.error(...args)
+      if(args[1] && args[1].details && (
+        args[1].details.includes("bufferStalledError") || 
+        args[1].details.includes("bufferNudgeOnStall") || 
+        args[1].details.includes("bufferSeekOverHole") || 
+        args[1].details.includes("bufferAddCodecError") 
+      )){
+        return
+      }
+
       errorInfo.current = args
       setErrorTime(errorTimer + 1)
     }
@@ -20,6 +30,7 @@ function ErrorEvent({ event, api, errorReloadTimer, flv, hls, changePlayIndex, i
       if (errorTimer > 0) {
         console.warn('视频重连成功！')
         event.emit(EventName.RELOAD_SUCCESS)
+        api.restPlayRate()
         clearErrorTimer()
       }
     }

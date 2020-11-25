@@ -39,6 +39,7 @@ function ContrallerBar({
         <RightBar
           api={api}
           event={event}
+          isLive={isLive}
           playContainer={playContainer}
           snapshot={snapshot}
           rightExtContents={rightExtContents}

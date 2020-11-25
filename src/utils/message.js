@@ -141,7 +141,7 @@ export const YUVMessage = ({api, playerState}) => {
       }
       
       <span className="lm-player-message">{message}</span>
-      <span style={{ fontSize: 12, color: '#333' }}>{messageTips}</span>
+      <span style={{ fontSize: 12, color: '#666' }}>{messageTips}</span>
 
       {
         status === 'connet' ? 

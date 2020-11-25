@@ -1,103 +1,3 @@
-import flvjs from 'flv.zv.js'
-import * as Hls from 'hls.js'
-
-/**
- * 创建HLS对象
- * @param {*} video
- * @param {*} file
- */
-export function createHlsPlayer(video, file) {
-  if (Hls.isSupported()) {
-    const player = new Hls({
-      liveDurationInfinity: true,
-      levelLoadingTimeOut: 15000,
-      fragLoadingTimeOut: 25000,
-      enableWorker: true
-    })
-    player.loadSource(file)
-    player.attachMedia(video)
-    return player
-  }
-}
-
-/**
- * 创建FLV对象
- * @param {*} video
- * @param {*} options
- */
-export function createFlvPlayer(video, options) {
-  const { flvOptions = {}, flvConfig = {} } = options
-  if (flvjs.isSupported()) {
-    const player = flvjs.createPlayer(
-      Object.assign({}, flvOptions, {
-        type: 'flv',
-        url: options.file
-      }),
-      Object.assign({}, flvConfig, {
-        enableWorker: true,
-        // lazyLoad: false,
-        // Indicates how many seconds of data to be kept for lazyLoad.
-        // lazyLoadMaxDuration: 0,
-        // autoCleanupMaxBackwardDuration: 3,
-        // autoCleanupMinBackwardDuration: 2,
-        // autoCleanupSourceBuffer: true,
-        enableStashBuffer: false,
-        stashInitialSize: 128,
-        isLive: options.isLive || true
-      })
-    )
-    player.attachMediaElement(video)
-    player.load()
-    return player
-  }
-}
-
-/**
- * 获取播放文件类型
- * @param {*} url
- */
-export function getVideoType(url) {
-  return url.indexOf('.flv') > -1 ? 'flv' : url.indexOf('.m3u8') > -1 ? 'm3u8' : 'native'
-}
-
-/**
- * 播放时间转字符串
- * @param {*} second_time
- */
-export function timeStamp(second_time) {
-  let time = Math.ceil(second_time)
-  if (time > 60) {
-    let second = Math.ceil(second_time % 60)
-    let min = Math.floor(second_time / 60)
-    time = `${min < 10 ? `0${min}` : min}:${second < 10 ? `0${second}` : second}`
-    if (min > 60) {
-      min = Math.ceil((second_time / 60) % 60)
-      let hour = Math.floor(second_time / 60 / 60)
-      time = `${hour < 10 ? `0${hour}` : hour}:${min < 10 ? `0${min}` : min}:${second < 10 ? `0${second}` : second}`
-    } else {
-      time = `00:${time}`
-    }
-  } else {
-    time = `00:00:${time < 10 ? `0${time}` : time}`
-  }
-
-  return time
-}
-
-/**
- * 日期格式化
- * @param {*} timetemp
- */
-export function dateFormat(timetemp) {
-  const date = new Date(timetemp)
-  let YYYY = date.getFullYear()
-  let DD = date.getDate()
-  let MM = date.getMonth() + 1
-  let hh = date.getHours()
-  let mm = date.getMinutes()
-  let ss = date.getSeconds()
-  return `${YYYY}.${MM > 9 ? MM : '0' + MM}.${DD > 9 ? DD : '0' + DD} ${hh > 9 ? hh : '0' + hh}.${mm > 9 ? mm : '0' + mm}.${ss > 9 ? ss : '0' + ss}`
-}
 
 /**
  * 全屏
@@ -209,6 +109,75 @@ export function computedBound(ele, currentPosition, scale) {
   }
 }
 
+/**
+ * 获取随机数
+ */
 export function getRandom() {
   return Math.random().toString(36).substr(2)
+}
+
+/**
+ * 获取视频分辨率
+ */
+export function getVideoRatio() {
+  return {
+    // '5': { value: '1920*1080', name: '超高清'},
+    '1': { value: '1280*720', name: '超清'},
+    '2': { value: '960*544', name: '高清'},
+    '3': { value: '640*480', name: '标清'},
+    '4': { value: '352*288', name: '普清'},
+  }
+}
+/**
+ * 根据分屏获取对应的分辨率
+ * 默认 960*544
+ */
+export function getScreenRate(num){
+  const videoRatio = getVideoRatio()
+  let ratio = ''
+
+  switch (num) {
+    case 1:
+      ratio = videoRatio['1'].value
+      break;
+    case 4:
+      ratio = videoRatio['2'].value
+      break;
+    case 9:
+      ratio = videoRatio['3'].value
+      break;
+    case 16:
+      ratio = videoRatio['4'].value
+      break;
+    default:
+      ratio = videoRatio['2'].value
+      break;
+  }
+
+  return ratio
+}
+
+/**
+ * 获取全局配置
+ * @param {*} key 
+ */
+export function getGlobalCache(key){
+  const strS = localStorage.getItem('PY_PLUS')
+  let playerOptions = null
+
+  try {
+    playerOptions = JSON.parse(strS);
+  } catch (error) {
+    console.error('播放配置出错，请检查浏览器存储！')
+  }
+  return playerOptions[key]
+}
+/**
+ * 全局配置
+ * decryptionMode： 是否加密
+ * switchRate：码率切换控制
+ */
+export const GL_CACHE = {
+  DM :'decryptionMode',
+  SR :'switchRate'
 }

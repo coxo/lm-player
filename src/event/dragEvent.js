@@ -1,5 +1,5 @@
 import React from 'react'
-import { computedBound } from '../utils/util'
+import { computedBound } from './util'
 import PropTypes from 'prop-types'
 
 class DragEvent extends React.Component {

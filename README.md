@@ -1,6 +1,6 @@
 # 说明
 
-> 基于[flv.js](https://github.com/bilibili/flv.js)和[hls.js](https://github.com/video-dev/hls.js)封装视频组件，支持`React`,也支持直接其他调用方式但是依赖`React`,`ReactDOM`,`PropTypes`
+> 基于websocket封装视频组件，主要将yuv格式视频流通过webgl渲染，支持`React`,也支持直接其他调用方式但是依赖`React`,`ReactDOM`,`PropTypes`
 
 ```javascript
 export { Player as default, Player, HistoryPlayer, createHistoryPlayer, createPlayer, Bar }
@@ -19,9 +19,9 @@ export { Player as default, Player, HistoryPlayer, createHistoryPlayer, createPl
 
 ```javascript
 
-yarn add lm-player
+yarn add lz-player
 //or
-npm i lm-player
+npm i lz-player
 
 ```
 
@@ -31,7 +31,7 @@ npm i lm-player
 
 ```javascript
 //React simple demo
-import LMPlayer from 'lm-player'
+import LMPlayer from 'lz-player'
 ReactDOM.render(
   <LMPlayer
     file={`./video.mp4?${Math.random()}`}

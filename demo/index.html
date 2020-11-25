@@ -26,7 +26,8 @@
     <div id="app"></div>
     <script src="./utils.js"></script>
     <script type="text/babel">
-      localStorage.setItem('PY_PLUS','{"mode": 2,"decryptionMode": "&decryption=1"}')
+      const HData ={"beginDate":1606187555000,"duration":3600,"fragments":[{"begin":0,"end":0},{"begin":0,"end":900,"file":"http://172.217.0.147:5460/oss/v1/548154231/record/m3u8/1606187555_1606188455.m3u8?client_token=548154231_0_1606277559_5186779c4cb6a37de5d767e2d2878fc1&head=1"},{"begin":900,"end":1800,"file":"http://172.217.0.147:5460/oss/v1/548154231/record/m3u8/1606188455_1606189355.m3u8?client_token=548154231_0_1606277559_5186779c4cb6a37de5d767e2d2878fc1"},{"begin":1800,"end":2700,"file":"http://172.217.0.147:5460/oss/v1/548154231/record/m3u8/1606189355_1606190255.m3u8?client_token=548154231_0_1606277559_5186779c4cb6a37de5d767e2d2878fc1"},{"begin":2700,"end":3601,"file":"http://172.217.0.147:5460/oss/v1/548154231/record/m3u8/1606190255_1606191156.m3u8?client_token=548154231_0_1606277559_5186779c4cb6a37de5d767e2d2878fc1"}]}
+      localStorage.setItem('PY_PLUS','{"mode": 2,"decryptionMode": "&decryption=1", "switchRate" : true}')
       const app = document.getElementById("app");
       const Player = LMPlayer.Player;
       const HistoryPlayer = LMPlayer.HistoryPlayer;
@@ -36,9 +37,11 @@
         { value: "flv", label: "FLV" },
         { value: "hls", label: "HLS" }
       ];
+      console.info('#444')
       const RootCompoent = () => {
         const liveInputRef = useRef(null);
         const historyInputRef = useRef(null);
+        const speedInputRef = useRef(null);
         const [isLive, setIsLive] = useState(true);
         const [file, setFile] = useState(undefined);
         const [screenNum, setScreenNum] = useState(4);
@@ -46,6 +49,9 @@
         const [liveType, setLiveType] = useState("");
         const [historyType, setHistoryType] = useState("");
         const [playObj, setPlayObj] = useState(null);
+
+        const [speed,setSpeed] = useState(1);
+        
 
         function preInfo(){
           window.playObj = playObj
@@ -59,6 +65,7 @@
         const config = {
           mode: 2
         }
+        console.info('########00')
         return (
           <div style={{ width: "100%", padding: 20 }}>
             <div style={{ width: 800, margin: "0 auto 40px auto" }}>
@@ -131,7 +138,7 @@
                   设置1分屏
                 </button>
               </div>
-              <Player type={liveType} onInitPlayer={setPlayObj} file={file} isLive={isLive} screenNum={screenNum} />
+             <Player type={liveType} hideContrallerBar={false} onInitPlayer={setPlayObj} file={file} isLive={isLive} screenNum={screenNum} />
             </div>
             <div style={{ width: 800, margin: "0 auto 40px auto" }}>
               <h2 style={{ marginBottom: 10 }}>
@@ -164,19 +171,39 @@
                   style={{ width: 60, height: 32 }}
                   onClick={e =>
                     setPlayList(() => {
-                      const list = JSON.parse(historyInputRef.current.value);
-                      return formatHistoryList(
-                        list,
-                        list[0].beginTime,
-                        list[list.length - 1].endTime
-                      );
+                      // const list = JSON.parse(historyInputRef.current.value);
+                      // return formatHistoryList(
+                      //   list,
+                      //   list[0].beginTime,
+                      //   list[list.length - 1].endTime
+                      // );
+                      return HData
                     })
                   }
                 >
                   播放
                 </button>
+                <input
+                  ref={speedInputRef}
+                  style={{height: 32 }}
+                  type="text"
+                  placeholder="请输入播放倍数，默认为1"
+                />
+                <button
+                  style={{ width: 60, height: 32 }}
+                  onClick={e =>
+                    //window.playObj.setPlaybackRate(speedInputRef.current.value || 1)
+                    setSpeed(speedInputRef.current.value || 1)
+                  }
+                >设置倍速</button>
               </div>
-              <HistoryPlayer type={historyType} historyList={playList} />
+              <HistoryPlayer         
+              onInitPlayer={(player) => {
+                 console.log(player);
+                // setPlayObj(player);
+                 window.playObj = player
+              }} 
+              type={historyType} speed={speed} historyList={playList} />
             </div>
           </div>
         );
