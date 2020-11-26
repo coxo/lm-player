@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import WebSocketController from "./scoket.js";
 import WebGLPlayer from "./WebGLPlayer.js";
+import { genuuid } from './util'
 
 class YUVPlayer extends React.Component {
   constructor(props) {
@@ -44,7 +45,9 @@ class YUVPlayer extends React.Component {
   }
 
   sendRatioCommand(RATIO) {
+    let rateArr = RATIO.split('*');
     RATIO && this.websocket && this.websocket.send(`{"commond":"modify", "url":"${RATIO}"}`);
+    this.player.setSizefunction(rateArr[0], rateArr[1], 1920);
   }
 
   openPlayer() {
@@ -82,10 +85,10 @@ class YUVPlayer extends React.Component {
     this.errorTimer = this.errorTimer + 1;
 
     // 开始loading...
-    this.setPlayerState({code: 70002, msg: '', errorTimer: this.errorTimer});
     const that = this;
-
+    
     if (this.errorTimer < errorReloadTimer + 1) {
+      this.setPlayerState({code: 70002, msg: '', errorTimer: this.errorTimer});
       this.reloadTimer = setTimeout(() => {
         console.warn(`视频播放出错，正在进行重连第${that.errorTimer}次重连`);
         that._createScoket();
@@ -133,8 +136,10 @@ class YUVPlayer extends React.Component {
     const _SOCKET_URL = this.SOCKET_URL;
     const _STREAM_URL = this.STREAM_URL || '';
     const RATE = this.RATIO;
-    let that = this;
-    const tokenId = this.props.token;
+    const tokenId = genuuid();
+    const that = this;
+    let tokenStr = '';
+    this.props.onToken(tokenId)
 
     if (!WebSocketController.isSupported()) {
       return;
@@ -145,7 +150,7 @@ class YUVPlayer extends React.Component {
     this.websocket.onComplete = this._onComplete.bind(this);
     this.websocket.onError = this._onError.bind(this);
     this.websocket.onCommand = this._onCommand.bind(this); // 初始化成功后，开始发送拉流地址
-    let tokenStr = ''
+    // console.info(tokenId)
     if(tokenId){
       tokenStr = `, "token":"${tokenId}"`
     }
@@ -156,7 +161,7 @@ class YUVPlayer extends React.Component {
     // 连接成功后，发送信令，开始视频拉流
     this.websocket.onSuccess = function (e) {
       if (e.msg === 'succeed') {
-        that.startPalyer();
+        this.startPalyer();
         this.websocket.send('{"commond":"start"}');
       } else {
         this.websocket.onError(e);

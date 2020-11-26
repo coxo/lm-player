@@ -606,6 +606,24 @@ function computedBound(ele, currentPosition, scale) {
   }
 }
 /**
+ * 生成UUID
+ */
+
+function genuuid() {
+  let s = [];
+  let hexDigits = '0123456789abcdef';
+
+  for (let i = 0; i < 36; i++) {
+    s[i] = hexDigits.substr(Math.floor(Math.random() * 0x10), 1);
+  }
+
+  s[14] = '4';
+  s[19] = hexDigits.substr(s[19] & 0x3 | 0x8, 1);
+  s[8] = s[13] = s[18] = s[23] = '-';
+  let uuidStr = s.join('');
+  return uuidStr;
+}
+/**
  * 获取视频分辨率
  */
 
@@ -2463,7 +2481,9 @@ class YUVPlayer extends React.Component {
   }
 
   sendRatioCommand(RATIO) {
+    let rateArr = RATIO.split('*');
     RATIO && this.websocket && this.websocket.send(`{"commond":"modify", "url":"${RATIO}"}`);
+    this.player.setSizefunction(rateArr[0], rateArr[1], 1920);
   }
 
   openPlayer() {
@@ -2503,14 +2523,14 @@ class YUVPlayer extends React.Component {
 
     this.errorTimer = this.errorTimer + 1; // 开始loading...
 
-    this.setPlayerState({
-      code: 70002,
-      msg: '',
-      errorTimer: this.errorTimer
-    });
     const that = this;
 
     if (this.errorTimer < errorReloadTimer + 1) {
+      this.setPlayerState({
+        code: 70002,
+        msg: '',
+        errorTimer: this.errorTimer
+      });
       this.reloadTimer = setTimeout(() => {
         console.warn(`视频播放出错，正在进行重连第${that.errorTimer}次重连`);
 
@@ -2564,8 +2584,9 @@ class YUVPlayer extends React.Component {
     const _STREAM_URL = this.STREAM_URL || '';
 
     const RATE = this.RATIO;
-    let that = this;
-    const tokenId = this.props.token;
+    const tokenId = genuuid();
+    let tokenStr = '';
+    this.props.onToken(tokenId);
 
     if (!WebSocketController.isSupported()) {
       return;
@@ -2576,8 +2597,7 @@ class YUVPlayer extends React.Component {
     this.websocket.onComplete = this._onComplete.bind(this);
     this.websocket.onError = this._onError.bind(this);
     this.websocket.onCommand = this._onCommand.bind(this); // 初始化成功后，开始发送拉流地址
-
-    let tokenStr = '';
+    // console.info(tokenId)
 
     if (tokenId) {
       tokenStr = `, "token":"${tokenId}"`;
@@ -2590,7 +2610,7 @@ class YUVPlayer extends React.Component {
 
     this.websocket.onSuccess = function (e) {
       if (e.msg === 'succeed') {
-        that.startPalyer();
+        this.startPalyer();
         this.websocket.send('{"commond":"start"}');
       } else {
         this.websocket.onError(e);
@@ -2635,6 +2655,7 @@ function SinglePlayer({
   onInitPlayer,
   screenNum,
   config,
+  onVideoFn,
   ...props
 }) {
   const playContainerRef = useRef(null);
@@ -2652,6 +2673,14 @@ function SinglePlayer({
 
   const VD_RUN_DEC = getGlobalCache(GL_CACHE.DM);
   const [yuvUrl, setYuvUrl] = useState(null);
+
+  function onToken(token) {
+    if (onVideoFn) {
+      onVideoFn({
+        uuid: token
+      });
+    }
+  }
 
   function loadPlusPlayer(playerObject) {
     console.info('进入插件播放模式==>');
@@ -2706,7 +2735,7 @@ function SinglePlayer({
     streamUrl: yuvUrl,
     ratio: rate,
     ref: YUVRef,
-    token: props.uuid,
+    onToken: onToken,
     onPlayerState: onPlayerState,
     errorReloadTimer: props.errorReloadTimer
   })), /*#__PURE__*/React.createElement(VideoTools, {

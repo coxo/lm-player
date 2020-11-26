@@ -138,7 +138,16 @@
                   设置1分屏
                 </button>
               </div>
-             <Player type={liveType} hideContrallerBar={false} onInitPlayer={setPlayObj} file={file} isLive={isLive} screenNum={screenNum} />
+             <Player 
+             type={liveType} 
+             hideContrallerBar={false} 
+             onInitPlayer={setPlayObj} 
+             file={file} 
+             isLive={isLive} 
+             onVideoFn={(info)=>{
+               console.info('==============================================>'+info.uuid)
+             }}
+             screenNum={screenNum} />
             </div>
             <div style={{ width: 800, margin: "0 auto 40px auto" }}>
               <h2 style={{ marginBottom: 10 }}>

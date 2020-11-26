@@ -16,7 +16,7 @@ import './yuv/player.css'
 
 import { getScreenRate, getGlobalCache, GL_CACHE } from './yuv/util'
 
-function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinline, loop, preload, children, onInitPlayer, screenNum , config, ...props }) {
+function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinline, loop, preload, children, onInitPlayer, screenNum , config,  onVideoFn, ...props }) {
   const playContainerRef = useRef(null)
   const YUVRef = useRef(null)
   const [playerObj, setPlayerObj] = useState(null)
@@ -34,6 +34,14 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
   const VD_RUN_DEC = getGlobalCache(GL_CACHE.DM)
 
   const [yuvUrl, setYuvUrl] = useState(null)
+
+  function onToken(token){
+    if(onVideoFn){
+      onVideoFn({
+        uuid: token
+      })
+    }
+  }
   
   function loadPlusPlayer(playerObject){
     console.info('进入插件播放模式==>')
@@ -79,7 +87,6 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
       onClose()
       return
     }
-    
     // 全用插件
     loadPlusPlayer(playerObject)
   }, [file])
@@ -88,7 +95,7 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
     <div className={`lm-player-container ${className}`} ref={playContainerRef}>
       <div className="player-mask-layout">
       {
-        <YUVPlayer streamUrl={yuvUrl} ratio={rate} ref={YUVRef} token={props.uuid} onPlayerState={onPlayerState}  errorReloadTimer={props.errorReloadTimer}/>
+        <YUVPlayer streamUrl={yuvUrl} ratio={rate} ref={YUVRef} onToken={onToken} onPlayerState={onPlayerState}  errorReloadTimer={props.errorReloadTimer}/>
       }
       </div>
 
