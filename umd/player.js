@@ -2487,7 +2487,7 @@
     sendRatioCommand(RATIO) {
       let rateArr = RATIO.split('*');
       RATIO && this.websocket && this.websocket.send(`{"commond":"modify", "url":"${RATIO}"}`);
-      this.player.setSizefunction(rateArr[0], rateArr[1], 1920);
+      this.player && this.player.setSizefunction(rateArr[0], rateArr[1], 1920);
     }
 
     openPlayer() {
