@@ -99,11 +99,16 @@ class YUVPlayer extends React.Component {
     }
   }
 
-  _onCommand() {
+  _onCommand(event) {
     let bufferData = new Uint8Array(event.data);
     let ratioWidth = this.getRatioNumber(bufferData, [0, 2]);
     let ratioHeight = this.getRatioNumber(bufferData, [2, 4]);
-    this.loadYuv(ratioWidth, ratioHeight, event.data);
+    let that = this;
+    try {
+      that.loadYuv(ratioWidth, ratioHeight, event.data);
+    }catch (e) {
+      console.error(e)
+    }
   }
 
   loadYuv(ratioWidth, ratioHeight, data) {
