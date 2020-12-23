@@ -2550,14 +2550,14 @@
       }
     }
 
-    _onCommand(event) {
-      let bufferData = new Uint8Array(event.data);
+    _onCommand(data) {
+      let bufferData = new Uint8Array(data);
       let ratioWidth = this.getRatioNumber(bufferData, [0, 2]);
       let ratioHeight = this.getRatioNumber(bufferData, [2, 4]);
       let that = this;
 
       try {
-        that.loadYuv(ratioWidth, ratioHeight, event.data);
+        that.loadYuv(ratioWidth, ratioHeight, data);
       } catch (e) {
         console.error(e);
       }
