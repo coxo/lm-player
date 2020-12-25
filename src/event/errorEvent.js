@@ -35,12 +35,17 @@ function ErrorEvent({ event, api, errorReloadTimer, flv, hls, changePlayIndex, i
       }
     }
     const clearErrorTimer = () => setErrorTime(0)
-    if (flv) {
-      flv.on('error', errorHandle)
+    try {
+      if (flv) {
+        flv.on('error', errorHandle)
+      }
+      if (hls) {
+        hls.on('hlsError', errorHandle)
+      }
+    } catch (e) {
+      console.warn(e)
     }
-    if (hls) {
-      hls.on('hlsError', errorHandle)
-    }
+
 
     if (isHistory) {
       //历史视频切换播放索引时清除错误次数
