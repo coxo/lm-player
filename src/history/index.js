@@ -256,6 +256,7 @@ HistoryPlayer.propTypes = {
   poster: PropTypes.string,
   loop: PropTypes.bool,
   defaultTime: PropTypes.number,
+  speed: PropTypes.number,
   className: PropTypes.string,
   playsinline: PropTypes.bool,
   children: PropTypes.any,
@@ -276,6 +277,7 @@ HistoryPlayer.defaultProps = {
   playsInline: false,
   preload: 'auto',
   loop: false,
+  speed: 1,
   defaultTime: 0,
   historyList: { beginDate: 0, duration: 0, fragments: [] },
 };

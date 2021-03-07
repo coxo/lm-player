@@ -212,9 +212,10 @@ class WebGLPlayer {
     destroyfunction() {
       const {
         gl
-      } = this; // 颜色缓冲区（COLOR_BUFFER_BIT） | 深度缓冲区（DEPTH_BUFFER_BIT） | 模板缓冲区（STENCIL_BUFFER_BIT）
+      } = this; // 颜色缓冲区（COLOR_BUFFER_BIT） | 深度缓冲区（DEPTH_BUFFER_BIT） | 模板缓冲区（ STENCIL_BUFFER_BIT）
       
       try {
+       // gl.getExtension('WEBGL_lose_context').loseContext();
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
       }catch(err){
         console.error(err)

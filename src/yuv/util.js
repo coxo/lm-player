@@ -139,11 +139,11 @@ export function getRandom() {
  */
 export function getVideoRatio() {
   return {
-    // '5': { value: '1920*1080', name: '超高清'},
-    '1': { value: '1280*720', name: '超清'},
-    '2': { value: '960*544', name: '高清'},
+    '1': { value: '1920*1080', name: '超清'},
+    '2': { value: '1280*720', name: '高清'},
     '3': { value: '640*480', name: '标清'},
-    '4': { value: '352*288', name: '普清'},
+    //'3': { value: '960*544', name: '高清'},
+    //'5': { value: '352*288', name: '普清'},
   }
 }
 /**
@@ -165,10 +165,10 @@ export function getScreenRate(num){
       ratio = videoRatio['3'].value
       break;
     case 16:
-      ratio = videoRatio['4'].value
+      ratio = videoRatio['3'].value
       break;
     default:
-      ratio = videoRatio['2'].value
+      ratio = videoRatio['1'].value
       break;
   }
 

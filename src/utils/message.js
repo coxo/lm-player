@@ -116,8 +116,7 @@ export const YUVMessage = ({api, playerState}) => {
 
   const { loading, status } = state
 
-  const playerDownloadUrl = window.BSConfig && window.BSConfig.playerDownloadUrl
-
+  const playerDownloadUrl = (window.BSConfig?.playerDownloadUrl) || localStorage.getItem('ZVPlayerUrl')
 
   return (
     <div className={`lm-player-message-mask ${loading || status === 'fail' || status === 'connet' || status === 'reload' ? 'lm-player-mask-loading-animation' : ''} ${status === 'connet' ? 'lm-player-puls-event' : ''}`}>

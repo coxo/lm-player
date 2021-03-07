@@ -1,6 +1,6 @@
 {
   "name": "lz-player",
-  "version": "0.2.2",
+  "version": "0.2.6",
   "description": "video for html5 support flv m3u8",
   "repository": {
     "type": "git",
@@ -25,8 +25,8 @@
     "flv.zv.js": "^2.2.0",
     "hls.js": "^0.15.0-alpha.2.0.canary.6124",
     "prop-types": "^15.7.2",
-    "react": "^16.8.6",
-    "react-dom": "^16.8.6"
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.7.2",

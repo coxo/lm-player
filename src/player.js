@@ -16,7 +16,7 @@ import './yuv/player.css'
 
 import { getScreenRate, getGlobalCache, GL_CACHE } from './yuv/util'
 
-function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinline, loop, preload, children, onInitPlayer, screenNum , config,  onVideoFn, ...props }) {
+function SinglePlayer({ type, isFrontEnd, frontList, file, className, autoPlay, muted, poster, playsinline, loop, preload, children, onInitPlayer, screenNum , config,  onVideoFn, historyList, ...props }) {
   const playContainerRef = useRef(null)
   const YUVRef = useRef(null)
   const [playerObj, setPlayerObj] = useState(null)
@@ -24,6 +24,23 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
   const [playerState, setPlayerState] = useState({code: 70000, msg: ''})
 
   const rate = useMemo(() => getScreenRate(screenNum), [screenNum]);
+
+  const filePath = useMemo(() => {
+    let url;
+    const index = 0
+    if(isFrontEnd){
+      try {
+        if(frontList && frontList[index]){
+          url = frontList[index].flv;
+        }
+      } catch (e) {
+        console.warn('未找到播放地址！', historyList)
+      }
+    }else{
+      url = file
+    }
+    return url;
+  }, [file, isFrontEnd]);
 
   // 播放运行模式
   // 0：不用插件
@@ -68,7 +85,7 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
     () => () => {
       onClose()
     },
-    [file]
+    [filePath]
   )
 
   useEffect(() => {
@@ -77,19 +94,19 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
       video: playContainerRef.current.querySelector('video')
     }
 
-    if(file){
+    if(filePath){
       // 是否解密
-      setYuvUrl(file + (VD_RUN_DEC || ''))
+      setYuvUrl(filePath + (VD_RUN_DEC || ''))
     }
 
-    if (!file) {
+    if (!filePath) {
       setYuvUrl('')
       onClose()
       return
     }
     // 全用插件
     loadPlusPlayer(playerObject)
-  }, [file])
+  }, [filePath])
 
   return (
     <div className={`lm-player-container ${className}`} ref={playContainerRef}>
@@ -102,7 +119,7 @@ function SinglePlayer({ type, file, className, autoPlay, muted, poster, playsinl
      <VideoTools
       playerObj={playerObj}
       isLive={props.isLive}
-      key={file}
+      key={filePath}
       hideContrallerBar={props.hideContrallerBar}
       errorReloadTimer={props.errorReloadTimer}
       scale={props.scale}

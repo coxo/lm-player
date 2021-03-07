@@ -633,23 +633,20 @@
 
   function getVideoRatio() {
     return {
-      // '5': { value: '1920*1080', name: '超高清'},
       '1': {
-        value: '1280*720',
+        value: '1920*1080',
         name: '超清'
       },
       '2': {
-        value: '960*544',
+        value: '1280*720',
         name: '高清'
       },
       '3': {
         value: '640*480',
         name: '标清'
-      },
-      '4': {
-        value: '352*288',
-        name: '普清'
-      }
+      } //'3': { value: '960*544', name: '高清'},
+      //'5': { value: '352*288', name: '普清'},
+
     };
   }
   /**
@@ -675,11 +672,11 @@
         break;
 
       case 16:
-        ratio = videoRatio['4'].value;
+        ratio = videoRatio['3'].value;
         break;
 
       default:
-        ratio = videoRatio['2'].value;
+        ratio = videoRatio['1'].value;
         break;
     }
 
@@ -994,6 +991,8 @@
     api,
     playerState
   }) => {
+    var _window$BSConfig;
+
     const [state, setState] = React.useState({
       status: null,
       msg: '',
@@ -1083,7 +1082,7 @@
       loading,
       status
     } = state;
-    const playerDownloadUrl = window.BSConfig && window.BSConfig.playerDownloadUrl;
+    const playerDownloadUrl = ((_window$BSConfig = window.BSConfig) === null || _window$BSConfig === void 0 ? void 0 : _window$BSConfig.playerDownloadUrl) || localStorage.getItem('ZVPlayerUrl');
     return /*#__PURE__*/React__default.createElement("div", {
       className: `lm-player-message-mask ${loading || status === 'fail' || status === 'connet' || status === 'reload' ? 'lm-player-mask-loading-animation' : ''} ${status === 'connet' ? 'lm-player-puls-event' : ''}`
     }, /*#__PURE__*/React__default.createElement(IconFont, {
@@ -1317,12 +1316,16 @@
 
       const clearErrorTimer = () => setErrorTime(0);
 
-      if (flv) {
-        flv.on('error', errorHandle);
-      }
+      try {
+        if (flv) {
+          flv.on('error', errorHandle);
+        }
 
-      if (hls) {
-        hls.on('hlsError', errorHandle);
+        if (hls) {
+          hls.on('hlsError', errorHandle);
+        }
+      } catch (e) {
+        console.warn(e);
       }
 
       if (isHistory) {
@@ -2434,9 +2437,10 @@
     destroyfunction() {
       const {
         gl
-      } = this; // 颜色缓冲区（COLOR_BUFFER_BIT） | 深度缓冲区（DEPTH_BUFFER_BIT） | 模板缓冲区（STENCIL_BUFFER_BIT）
+      } = this; // 颜色缓冲区（COLOR_BUFFER_BIT） | 深度缓冲区（DEPTH_BUFFER_BIT） | 模板缓冲区（ STENCIL_BUFFER_BIT）
 
       try {
+        // gl.getExtension('WEBGL_lose_context').loseContext();
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
       } catch (err) {
         console.error(err);
@@ -2657,6 +2661,8 @@
 
   function SinglePlayer({
     type,
+    isFrontEnd,
+    frontList,
     file,
     className,
     autoPlay,
@@ -2670,6 +2676,7 @@
     screenNum,
     config,
     onVideoFn,
+    historyList,
     ...props
   }) {
     const playContainerRef = React.useRef(null);
@@ -2679,7 +2686,25 @@
       code: 70000,
       msg: ''
     });
-    const rate = React.useMemo(() => getScreenRate(screenNum), [screenNum]); // 播放运行模式
+    const rate = React.useMemo(() => getScreenRate(screenNum), [screenNum]);
+    const filePath = React.useMemo(() => {
+      let url;
+      const index = 0;
+
+      if (isFrontEnd) {
+        try {
+          if (frontList && frontList[index]) {
+            url = frontList[index].flv;
+          }
+        } catch (e) {
+          console.warn('未找到播放地址！', historyList);
+        }
+      } else {
+        url = file;
+      }
+
+      return url;
+    }, [file, isFrontEnd]); // 播放运行模式
     // 0：不用插件
     // 1：h264不用插件，其它用插件
     // 2：全用插件
@@ -2719,19 +2744,19 @@
 
     React.useEffect(() => () => {
       onClose();
-    }, [file]);
+    }, [filePath]);
     React.useEffect(() => {
       const playerObject = {
         playContainer: playContainerRef.current,
         video: playContainerRef.current.querySelector('video')
       };
 
-      if (file) {
+      if (filePath) {
         // 是否解密
-        setYuvUrl(file + (VD_RUN_DEC || ''));
+        setYuvUrl(filePath + (VD_RUN_DEC || ''));
       }
 
-      if (!file) {
+      if (!filePath) {
         setYuvUrl('');
         onClose();
         return;
@@ -2739,7 +2764,7 @@
 
 
       loadPlusPlayer(playerObject);
-    }, [file]);
+    }, [filePath]);
     return /*#__PURE__*/React__default.createElement("div", {
       className: `lm-player-container ${className}`,
       ref: playContainerRef
@@ -2755,7 +2780,7 @@
     })), /*#__PURE__*/React__default.createElement(VideoTools, {
       playerObj: playerObj,
       isLive: props.isLive,
-      key: file,
+      key: filePath,
       hideContrallerBar: props.hideContrallerBar,
       errorReloadTimer: props.errorReloadTimer,
       scale: props.scale,
@@ -3819,6 +3844,7 @@
     poster: PropTypes.string,
     loop: PropTypes.bool,
     defaultTime: PropTypes.number,
+    speed: PropTypes.number,
     className: PropTypes.string,
     playsinline: PropTypes.bool,
     children: PropTypes.any,
@@ -3839,6 +3865,7 @@
     playsInline: false,
     preload: 'auto',
     loop: false,
+    speed: 1,
     defaultTime: 0,
     historyList: {
       beginDate: 0,
